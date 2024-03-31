@@ -68,7 +68,7 @@ io.on('connection', socket => {
         }
     })
     socket.on('get-peers', () => {
-        io.emit('update-peers', peers)
+        io.emit('update-peers-conn', peers)
     })
 })
 

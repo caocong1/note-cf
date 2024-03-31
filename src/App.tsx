@@ -117,6 +117,7 @@ const Home = () => {
                     stopStream()
                     setOpenModal(false)
                     setMinModal(false)
+                    Modal.destroyAll()
                     Modal.confirm({
                         title: '提示',
                         content: '是否观看远程桌面共享？',
@@ -252,7 +253,9 @@ const Home = () => {
                 setPeers(res)
                 globalPeers = res
                 PeerCallStream(res)
+            })
 
+            socket.on('update-peers-conn', res => {
                 res.forEach((peerId: string) => {
                     if (peerId === peer.id) return
                     const conn = peer.connect(peerId);
