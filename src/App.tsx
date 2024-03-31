@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import io from 'socket.io-client'
 import { DataConnection, Peer } from "peerjs";
-import { Button, Modal, notification, Space } from "antd";
+import { Button, Modal, notification, Space, Spin } from "antd";
 import Draggable from 'react-draggable';
 
 let uuid: string
@@ -15,6 +15,9 @@ const chunkSize = 1024 * 1024 * 2
 // const apiUrl = 'http://home.love2c.cc:2096'
 const apiUrl = 'https://api.note.pet'
 // const apiUrl = 'https://1254199563-6r7pvw8t7g-bj.scf.tencentcs.com'
+// const peerUrl = ''
+// const peerUrl = 'localhost'
+const peerUrl = 'peer.note.pet'
 const socket = io(apiUrl);
 const conns: Record<string, DataConnection> = {}
 
@@ -53,6 +56,8 @@ const Home = () => {
     const [mounted, setMounted] = useState(false);
     useEffect(() => {
         setMounted(true);
+
+        console.log(location.pathname)
     }, []);
 
     const [openModal, setOpenModal] = useState(false)
@@ -61,6 +66,7 @@ const Home = () => {
     // const [bounds, setBounds] = useState({left: 0, top: 0, bottom: 0, right: 0});
     const [minModal, setMinModal] = useState(false)
     const [peers, setPeers] = useState<string[]>([])
+    const [loading, setLoading] = useState(true)
 
     const showVideo = useCallback((stream: MediaStream) => {
         // console.log('showVideo')
@@ -80,15 +86,8 @@ const Home = () => {
     }, [])
 
     useEffect(() => {
-        socket.on('init', (res) => {
-            console.log('init')
-            const el = document.getElementById('content')
-            if (res.input && el) {
-                el.innerHTML = res.input
-            }
-            setPeers(res.peers)
-            globalPeers = res.peers
-        })
+        let peerOpen: boolean = false
+        let initResult: any = null
 
         socket.on('connect', () => {
             console.log('connected')
@@ -98,17 +97,21 @@ const Home = () => {
                 uuid = crypto.randomUUID()
                 localStorage.uuid = uuid
             }
-            socket.emit('join', uuid)
-            peer = new Peer(uuid)
+            socket.emit('join', { uuid, room: location.pathname })
+            // peer = new Peer(uuid)
             // console.log('peer', uuid, peer.id, peer)
-            // peer = new Peer(uuid, {
-            //     host: '/',
-            //     port: 23334,
-            //     // path: '/api',
-            // })
+            peer = peerUrl ? new Peer(uuid, {
+                host: peerUrl,
+                port: 23334,
+                secure: peerUrl !=='localhost',
+                // path: '/api',
+            }) : new Peer(uuid)
             peer.on('open', function (id) {
                 console.log('My peer ID is: ' + id);
-                // socket.emit('add-peer', id)
+                peerOpen = true
+                if (initResult) {
+                    init()
+                }
             })
             peer.on('call', function (call) {
                 // console.log('peer call', call, call.peer, peer.id)
@@ -137,112 +140,15 @@ const Home = () => {
                 //     });
                 // });
             })
+
             peer.on('connection', function (conn) {
-                //console.log('peer connection', conn)
-                conn.on('data', data => {
-                    //console.log('peer connection data', data)
-                    const { type } = data as any
-                    if (type === 'request-file') {
-                        const { filename, peerId } = data as any
-                        if (filename && files[filename]) {
-                            const file = files[filename]
-                            const sendFileConn = peer.connect(peerId);
-                            sendFileConn.on('open', function () {
-                                sendFileConn.send({
-                                    type: 'send-file-start',
-                                    filename: file.name,
-                                    filetype: file.type
-                                });
-                                file.arrayBuffer().then((buffer) => {
-                                    //console.log(buffer)
-                                    // let blob = new Blob([buffer], {type: file.type});
-                                    //     sendFileConn.send(buffer)
-                                    const size = buffer.byteLength
-                                    let start = 0
-                                    let end = size > chunkSize ? chunkSize : size
-                                    let sendBuffer = buffer.slice(start, end)
-                                    while (sendBuffer.byteLength > 0) {
-                                        sendFileConn.send({
-                                            type: 'send-file',
-                                            filename: file.name,
-                                            buffer: sendBuffer,
-                                            start,
-                                            end,
-                                            size,
-                                        });
-                                        start = end
-                                        end = size > start + chunkSize ? start + chunkSize : size
-                                        sendBuffer = buffer.slice(start, end)
-                                    }
-                                    // sendFileConn.send({
-                                    //     type: 'send-file',
-                                    //     filename: file.name,
-                                    //     buffer,
-                                    //     filetype: file.type
-                                    // });
-                                    // sendFileConn.close()
-                                })
-                            })
-                        } else {
-                            const element = document.querySelector(`[download="${filename}"]`);
-                            if (element) {
-                                element.remove();
-                            }
-                            const content = document.getElementById('content')
-                            if (content) {
-                                inputChange(content.innerHTML)
-                                // socket.emit('input-change', { peerId: peer.id, msg: content.innerHTML })
-                            }
-                            const sendFileConn = peer.connect(peerId);
-                            sendFileConn.on('open', function () {
-                                sendFileConn.send({ type: 'send-file-error' });
-                            })
-                            notification.error({ message: '文件不存在，请重新发送' })
-                        }
-                        // } else if (type === 'html') {
-                        //     const {content} = data as any
-                        //     const el = document.getElementById('content')
-                        //     if (el) el.innerHTML = content as string
-                    } else if (type === 'send-file') {
-                        const { filename, filetype, buffer, start, end, size } = data as any
-                        // console.log('send-file', filename, start, end, size, buffer.byteLength)
-                        if (start === 0) {
-                            receiveFiles[filename] = new Uint8Array(new Uint8Array(new ArrayBuffer(size)))
-                            // console.log('receiveFiles[filename] length', receiveFiles[filename].byteLength)
-                        }
-                        receiveFiles[filename].set(new Uint8Array(buffer), start);
-                        if (end === size) {
-                            const blob = new Blob([receiveFiles[filename]], { type: filetype });
-                            const a = document.createElement('a')
-                            a.href = window.URL.createObjectURL(blob);
-                            a.download = filename
-                            a.click()
-                            const element = document.querySelector(`[download="${filename}"]`);
-                            if (element) {
-                                element.innerHTML = filename + `(${Math.floor(end / size * 100)}%)`
-                            }
-                            delete receiveFiles[filename]
-                        } else {
-                            const element = document.querySelector(`[download="${filename}"]`);
-                            if (element) {
-                                element.innerHTML = filename + `(${Math.floor(end / size * 100)}%)`
-                            }
-                        }
-                        // console.log('send-file', filename, buffer)
-                    } else if (type === 'send-file-error') {
-                        notification.error({ message: '文件不存在，请重新发送' })
-                    } else if (type === 'send-file-start') {
-                        const { filename } = data as any
-                        const element = document.querySelector(`[download="${filename}"]`);
-                        if (element) {
-                            element.innerHTML = filename + '(开始下载)'
-                        }
-                    } else if (type === 'input-change') {
-                        const { content } = data as any
-                        const el = document.getElementById('content')
-                        if (el) el.innerHTML = content as string
-                    }
-                    // conn.close()
+                console.log('peer connected', conn.peer)
+                if (conns[conn.peer]) {
+                    return
+                }
+                conn.on('open', function () {
+                    conns[conn.peer] = conn
+                    connectToPeer(conn)
                 })
             })
             // peer.on('disconnected', function() {
@@ -251,23 +157,192 @@ const Home = () => {
             // })
 
             socket.on('update-peers', res => {
-                // console.log('update-peers', res)
+                console.log('update-peers', res)
                 // peers = res
                 setPeers(res)
                 globalPeers = res
                 PeerCallStream(res)
             })
 
-            socket.on('update-peers-conn', res => {
-                res.forEach((peerId: string) => {
-                    if (peerId === peer.id) return
+            // socket.on('update-peers-conn', res => {
+            //     res.forEach((peerId: string) => {
+            //         if (peerId === peer.id) return
+            //         const conn = peer.connect(peerId);
+            //         conn.on('open', function () {
+            //             conns[peerId] = conn
+            //         })
+            //     })
+            // })
+        })
+
+        socket.on('init', (res) => {
+            console.log('init', res.peers)
+            initResult = res
+            if (peerOpen) {
+                init()
+            }
+        })
+
+        function init() {
+            const el = document.getElementById('content')
+            if (initResult.input && el) {
+                el.innerHTML = initResult.input
+            }
+            setPeers(initResult.peers)
+            globalPeers = initResult.peers
+
+            const restPeers = initResult.peers.filter((peerId: string) => peer.id !== peerId)
+            if (restPeers.length) {
+                const promises = restPeers.map((peerId: string) => new Promise<void>((resolve) => {
                     const conn = peer.connect(peerId);
                     conn.on('open', function () {
                         conns[peerId] = conn
+                        connectToPeer(conn)
+                        resolve()
                     })
+                }))
+
+                Promise.all(promises).then(() => {
+                    setLoading(false)
                 })
+            } else {
+                setLoading(false)
+            }
+        }
+
+        function connectToPeer(conn: DataConnection) {
+            const peerId = conn.peer
+            const ps = [...new Set([...globalPeers, peerId])]
+            if (ps.length !== globalPeers.length) {
+                setPeers(ps)
+                globalPeers = ps
+            }
+            conn.on('close', function () {
+                console.log('peer connection close', peerId)
+                const ps = globalPeers.filter(p => p !== peerId)
+                setPeers(ps)
+                globalPeers = ps
+                delete conns[peerId]
+                socket.emit('remove-peer', { peerId, room: location.pathname })
             })
-        })
+            conn.on('error', function () {
+                console.log('peer connection error', peerId)
+                const ps = globalPeers.filter(p => p !== peerId)
+                setPeers(ps)
+                globalPeers = ps
+                delete conns[peerId]
+                socket.emit('remove-peer', { peerId, room: location.pathname })
+            })
+            conn.on('data', data => {
+                //console.log('peer connection data', data)
+                const { type } = data as any
+                if (type === 'request-file') {
+                    const { filename, peerId } = data as any
+                    if (filename && files[filename]) {
+                        const file = files[filename]
+                        const sendFileConn = conns[peerId];
+                        if (!sendFileConn) {
+                            notification.error({ message: '连接失败请重试' })
+                            return
+                        }
+                        sendFileConn.send({
+                            type: 'send-file-start',
+                            filename: file.name,
+                            filetype: file.type
+                        });
+                        file.arrayBuffer().then((buffer) => {
+                            //console.log(buffer)
+                            // let blob = new Blob([buffer], {type: file.type});
+                            //     sendFileConn.send(buffer)
+                            const size = buffer.byteLength
+                            let start = 0
+                            let end = size > chunkSize ? chunkSize : size
+                            let sendBuffer = buffer.slice(start, end)
+                            while (sendBuffer.byteLength > 0) {
+                                sendFileConn.send({
+                                    type: 'send-file',
+                                    filename: file.name,
+                                    buffer: sendBuffer,
+                                    start,
+                                    end,
+                                    size,
+                                });
+                                start = end
+                                end = size > start + chunkSize ? start + chunkSize : size
+                                sendBuffer = buffer.slice(start, end)
+                            }
+                            // sendFileConn.send({
+                            //     type: 'send-file',
+                            //     filename: file.name,
+                            //     buffer,
+                            //     filetype: file.type
+                            // });
+                            // sendFileConn.close()
+                        })
+                    } else {
+                        const element = document.querySelector(`[download="${filename}"]`);
+                        if (element) {
+                            element.remove();
+                        }
+                        const content = document.getElementById('content')
+                        if (content) {
+                            inputChange(content.innerHTML)
+                            // socket.emit('input-change', { peerId: peer.id, msg: content.innerHTML })
+                        }
+                        const sendFileConn = conns[peerId];
+                        if (!sendFileConn) {
+                            notification.error({ message: '连接失败请重试' })
+                            return
+                        }
+                        sendFileConn.send({ type: 'send-file-error' });
+                        notification.error({ message: '文件不存在，请重新发送' })
+                    }
+                    // } else if (type === 'html') {
+                    //     const {content} = data as any
+                    //     const el = document.getElementById('content')
+                    //     if (el) el.innerHTML = content as string
+                } else if (type === 'send-file') {
+                    const { filename, filetype, buffer, start, end, size } = data as any
+                    // console.log('send-file', filename, start, end, size, buffer.byteLength)
+                    if (start === 0) {
+                        receiveFiles[filename] = new Uint8Array(new Uint8Array(new ArrayBuffer(size)))
+                        // console.log('receiveFiles[filename] length', receiveFiles[filename].byteLength)
+                    }
+                    receiveFiles[filename].set(new Uint8Array(buffer), start);
+                    if (end === size) {
+                        const blob = new Blob([receiveFiles[filename]], { type: filetype });
+                        const a = document.createElement('a')
+                        a.href = window.URL.createObjectURL(blob);
+                        a.download = filename
+                        a.click()
+                        const element = document.querySelector(`[download="${filename}"]`);
+                        if (element) {
+                            element.innerHTML = filename + `(${Math.floor(end / size * 100)}%)`
+                        }
+                        delete receiveFiles[filename]
+                    } else {
+                        const element = document.querySelector(`[download="${filename}"]`);
+                        if (element) {
+                            element.innerHTML = filename + `(${Math.floor(end / size * 100)}%)`
+                        }
+                    }
+                    // console.log('send-file', filename, buffer)
+                } else if (type === 'send-file-error') {
+                    notification.error({ message: '文件不存在，请重新发送' })
+                } else if (type === 'send-file-start') {
+                    const { filename } = data as any
+                    const element = document.querySelector(`[download="${filename}"]`);
+                    if (element) {
+                        element.innerHTML = filename + '(开始下载)'
+                    }
+                } else if (type === 'input-change') {
+                    const { content } = data as any
+                    const el = document.getElementById('content')
+                    if (el) el.innerHTML = content as string
+                }
+                // conn.close()
+            })
+        }
 
         // socket.on('update-input', ({ peerId, msg }) => {
         //     // console.log('update-input', msg, peerId)
@@ -353,13 +428,10 @@ const Home = () => {
                     return
                 }
                 if (remotePeerId && remotePeerId !== peer.id && globalPeers.includes(remotePeerId)) {
-                    const conn = peer.connect(remotePeerId);
+                    const conn = conns[remotePeerId];
                     // console.log(conn, globalPeers, remotePeerId)
                     if (conn) {
-                        conn.on('open', function () {
-                            conn.send({ type: 'request-file', filename: el.innerText, peerId: peer.id });
-                            // conn.close()
-                        })
+                        conn.send({ type: 'request-file', filename: el.innerText, peerId: peer.id });
                     } else {
                         notification.error({ message: '连接失败请重试' })
                     }
@@ -371,7 +443,7 @@ const Home = () => {
 
         window.onfocus = function () {
             // console.log('focus')
-            socket.emit('get-peers')
+            // socket.emit('get-peers')
         }
     }, [showVideo])
 
@@ -392,7 +464,7 @@ const Home = () => {
 
     if (!mounted) return <></>;
     return (
-        <>
+        <Spin spinning={loading}>
             <div
                 id="content"
                 contentEditable
@@ -583,40 +655,19 @@ const Home = () => {
                     />
                 </div>
             </Modal>
-        </>
+        </Spin>
     )
 }
 
 export default Home
 
-const connectting: { [key: string]: boolean } = {}
-const latestContent: { [key: string]: string } = {}
-
 function inputChange(content: string) {
     const promises = globalPeers.filter(peerId => peerId !== peer.id).map(peerId => new Promise<void>((resolve) => {
         // console.log('conns[peerId]', conns[peerId], peerId)
-        sendContent(content)
-        function sendContent(content: string) {
-            latestContent[peerId] = content
-            if (!conns[peerId]) {
-                if (connectting[peerId]) {
-                    setTimeout(() => {
-                        sendContent(latestContent[peerId])
-                    }, 1000)
-                } else {
-                    connectting[peerId] = true
-                    const conn = peer.connect(peerId);
-                    conn.on('open', function () {
-                        conns[peerId] = conn
-                        connectting[peerId] = false
-                        conn.send({ type: 'input-change', content: latestContent[peerId] });
-                        resolve()
-                    })
-                }
-            } else {
-                conns[peerId].send({ type: 'input-change', content: latestContent[peerId] });
-                resolve()
-            }
+        const conn = conns[peerId];
+        if (conn) {
+            conn.send({ type: 'input-change', content });
+            resolve()
         }
     }))
     Promise.all(promises).then()

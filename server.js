@@ -1,10 +1,10 @@
-import Koa  from 'koa';
-import {Server} from 'socket.io'
+import Koa from 'koa';
+import { Server } from 'socket.io'
 import http from 'http';
 import cors from '@koa/cors';
 
-let input
-let peers = []
+let input = {}
+let peers = {}
 let streamingPeerId
 
 const app = new Koa();
@@ -17,34 +17,23 @@ app.use(cors());
 
 io.on('connection', socket => {
     let uuid
+    let room
     console.log('connection')
-    // socket.join(uuid)
-    // io.to(uuid).emit('init', {uuid, input})
-    // let peerId: string
 
-    socket.on('join', id => {
-        console.log('join', id)
-        uuid = id
-        peers.push(uuid)
-        socket.emit('init', {input, peers})
-        io.emit('update-peers', peers)
+    socket.on('join', (res) => {
+        console.log('join', res)
+        uuid = res.uuid
+        room = res.room
+        peers[room] = peers[room] || []
+        peers[room] = [...new Set([...peers[room], uuid])]
+        // io.emit('update-peers', peers[room])
+        socket.emit('init', { input: input[room], peers: peers[room] })
     })
 
-    socket.on('input-change', ({ msg}) => {
-        input = msg
+    socket.on('input-change', ({ msg }) => {
+        input[room] = msg
         // socket.broadcast.emit('update-input', {peerId, msg})
     })
-
-    // socket.on('add-peer', id => {
-    //     console.log('new peer', id)
-    //     peerId = id
-    //     // socket.join(peerId)
-    //     peers.push(peerId)
-    //     socket.emit('init', input)
-    //     io.emit('update-peers', peers)
-    //     console.log('peers', peers)
-    //     // socket.broadcast.except(uuid).emit('update-input', msg)
-    // })
 
     socket.on('start-stream', id => {
         console.log('start-stream', id)
@@ -58,18 +47,28 @@ io.on('connection', socket => {
         // socket.broadcast.emit('streaming', id)
     })
 
-    socket.on('disconnect', () => {
-        console.log('disconnect', uuid)
-        peers = peers.filter(peer => peer !== uuid)
-        io.emit('update-peers', peers)
+    socket.on('remove-peer', peerId => {
+        // console.log('remove-peer', peerId)
+        peers[room] = peers[room].filter(peer => peer !== peerId)
         if (streamingPeerId === uuid) {
             streamingPeerId = ''
             socket.broadcast.emit('stop-streaming')
         }
     })
-    socket.on('get-peers', () => {
-        io.emit('update-peers-conn', peers)
-    })
+
+    // socket.on('disconnect', () => {
+    //     console.log('disconnect', uuid)
+    //     peers[room] = peers[room].filter(peer => peer !== uuid)
+    //     io.emit('update-peers', peers[room])
+    //     if (streamingPeerId === uuid) {
+    //         streamingPeerId = ''
+    //         socket.broadcast.emit('stop-streaming')
+    //     }
+    // })
+
+    // socket.on('get-peers', () => {
+    //     io.emit('update-peers-conn', peers[room])
+    // })
 })
 
 server.listen(23335, () => {
