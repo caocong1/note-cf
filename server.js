@@ -30,9 +30,9 @@ io.on('connection', socket => {
         io.emit('update-peers', peers)
     })
 
-    socket.on('input-change', ({peerId, msg}) => {
+    socket.on('input-change', ({ msg}) => {
         input = msg
-        socket.broadcast.emit('update-input', {peerId, msg})
+        // socket.broadcast.emit('update-input', {peerId, msg})
     })
 
     // socket.on('add-peer', id => {
@@ -66,6 +66,9 @@ io.on('connection', socket => {
             streamingPeerId = ''
             socket.broadcast.emit('stop-streaming')
         }
+    })
+    socket.on('get-peers', () => {
+        io.emit('update-peers', peers)
     })
 })
 

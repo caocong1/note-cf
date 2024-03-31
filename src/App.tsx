@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import io from 'socket.io-client'
-import { Peer } from "peerjs";
+import { DataConnection, Peer } from "peerjs";
 import { Button, Modal, notification, Space } from "antd";
 import Draggable from 'react-draggable';
 
@@ -11,10 +11,12 @@ let videoStream: MediaStream | null = null
 const files: Record<string, File> = {}
 let streamingId: string
 const chunkSize = 1024 * 1024 * 2
+const apiUrl = 'http://localhost:23335'
 // const apiUrl = 'http://home.love2c.cc:2096'
-const apiUrl = 'https://api.note.pet'
+// const apiUrl = 'https://api.note.pet'
 // const apiUrl = 'https://1254199563-6r7pvw8t7g-bj.scf.tencentcs.com'
 const socket = io(apiUrl);
+const conns: Record<string, DataConnection> = {}
 
 function PeerCallStream(peers: string[] = []) {
     // console.log('PeerCallStream', peers, peer.id, uuid)
@@ -178,13 +180,14 @@ const Home = () => {
                                 })
                             })
                         } else {
-                            let element = document.querySelector(`[download="${filename}"]`);
+                            const element = document.querySelector(`[download="${filename}"]`);
                             if (element) {
                                 element.remove();
                             }
                             const content = document.getElementById('content')
                             if (content) {
-                                socket.emit('input-change', { peerId: peer.id, msg: content.innerHTML })
+                                inputChange(content.innerHTML)
+                                // socket.emit('input-change', { peerId: peer.id, msg: content.innerHTML })
                             }
                             const sendFileConn = peer.connect(peerId);
                             sendFileConn.on('open', function () {
@@ -210,13 +213,13 @@ const Home = () => {
                             a.href = window.URL.createObjectURL(blob);
                             a.download = filename
                             a.click()
-                            let element = document.querySelector(`[download="${filename}"]`);
+                            const element = document.querySelector(`[download="${filename}"]`);
                             if (element) {
                                 element.innerHTML = filename + `(${Math.floor(end / size * 100)}%)`
                             }
                             delete receiveFiles[filename]
                         } else {
-                            let element = document.querySelector(`[download="${filename}"]`);
+                            const element = document.querySelector(`[download="${filename}"]`);
                             if (element) {
                                 element.innerHTML = filename + `(${Math.floor(end / size * 100)}%)`
                             }
@@ -226,10 +229,14 @@ const Home = () => {
                         notification.error({ message: '文件不存在，请重新发送' })
                     } else if (type === 'send-file-start') {
                         const { filename } = data as any
-                        let element = document.querySelector(`[download="${filename}"]`);
+                        const element = document.querySelector(`[download="${filename}"]`);
                         if (element) {
                             element.innerHTML = filename + '(开始下载)'
                         }
+                    } else if (type === 'input-change') {
+                        const { content } = data as any
+                        const el = document.getElementById('content')
+                        if (el) el.innerHTML = content as string
                     }
                     // conn.close()
                 })
@@ -245,17 +252,25 @@ const Home = () => {
                 setPeers(res)
                 globalPeers = res
                 PeerCallStream(res)
+
+                res.forEach((peerId: string) => {
+                    if (peerId === peer.id) return
+                    const conn = peer.connect(peerId);
+                    conn.on('open', function () {
+                        conns[peerId] = conn
+                    })
+                })
             })
         })
 
-        socket.on('update-input', ({ peerId, msg }) => {
-            // console.log('update-input', msg, peerId)
-            // setInput(msg)
-            //   (ref.current as any)?.innerHTML = msg
-            if (peerId === peer.id || !peerId) return
-            const el = document.getElementById('content')
-            if (el) el.innerHTML = msg
-        })
+        // socket.on('update-input', ({ peerId, msg }) => {
+        //     // console.log('update-input', msg, peerId)
+        //     // setInput(msg)
+        //     //   (ref.current as any)?.innerHTML = msg
+        //     if (peerId === peer.id || !peerId) return
+        //     const el = document.getElementById('content')
+        //     if (el) el.innerHTML = msg
+        // })
 
 
         socket.on('stop-streaming', () => {
@@ -304,7 +319,8 @@ const Home = () => {
                     div.appendChild(a)
                     el.appendChild(div)
 
-                    socket.emit('input-change', { peerId: peer.id, msg: el.innerHTML })
+                    inputChange(el.innerHTML)
+                    // socket.emit('input-change', { peerId: peer.id, msg: el.innerHTML })
                     // peers.forEach((peerId) => {
                     //     if (peerId === peer.id) return
                     //     const conn = peer.connect(peerId);
@@ -345,6 +361,11 @@ const Home = () => {
                 }
             }
         })
+
+        window.onfocus = function () {
+            // console.log('focus')
+            socket.emit('get-peers')
+        }
     }, [showVideo])
 
     const closeModal = useCallback(() => {
@@ -370,12 +391,18 @@ const Home = () => {
                 style={{ width: '100vw', height: '100vh', boxSizing: 'border-box', padding: 8 }}
                 onInput={(e: any) => {
                     // console.log('input', e.target.innerHTML, peer.id, peer)
-                    socket.emit('input-change', { peerId: peer.id, msg: e.target.innerHTML })
+                    inputChange(e.target.innerHTML)
+                    // socket.emit('input-change', { peerId: peer.id, msg: e.target.innerHTML })
+                    // const conn = peer.connect('broadcast');
+                    // conn.on('open', function () {
+                    //     conn.send({ type: 'input-change', content: e.target.innerHTML });
+                    // })
                     // peers.forEach((peerId) => {
                     //     if (peerId === peer.id) return
                     //     const conn = peer.connect(peerId);
+                    //     console.log(conn, peers, peerId)
                     //     conn.on('open', function () {
-                    //         conn.send({type: 'html', content: e.target.innerHTML});
+                    //         conn.send({type: 'input-change', content: e.target.innerHTML});
                     //         // conn.close()
                     //     })
                     // })
@@ -552,3 +579,37 @@ const Home = () => {
 }
 
 export default Home
+
+const connectting: { [key: string]: boolean } = {}
+const latestContent: { [key: string]: string } = {}
+
+function inputChange(content: string) {
+    const promises = globalPeers.filter(peerId => peerId !== peer.id).map(peerId => new Promise<void>((resolve) => {
+        console.log('conns[peerId]', conns[peerId], peerId)
+        sendContent(content)
+        function sendContent(content: string) {
+            latestContent[peerId] = content
+            if (!conns[peerId]) {
+                if (connectting[peerId]) {
+                    setTimeout(() => {
+                        sendContent(latestContent[peerId])
+                    }, 1000)
+                } else {
+                    connectting[peerId] = true
+                    const conn = peer.connect(peerId);
+                    conn.on('open', function () {
+                        conns[peerId] = conn
+                        connectting[peerId] = false
+                        conn.send({ type: 'input-change', content: latestContent[peerId] });
+                        resolve()
+                    })
+                }
+            } else {
+                conns[peerId].send({ type: 'input-change', content: latestContent[peerId] });
+                resolve()
+            }
+        }
+    }))
+    Promise.all(promises).then()
+    socket.emit('input-change', { peerId: peer.id, msg: content })
+}
