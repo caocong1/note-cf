@@ -11,8 +11,8 @@ let videoStream: MediaStream | null = null
 const files: Record<string, File> = {}
 let streamingId: string
 const chunkSize = 1024 * 1024 * 2
-// const apiUrl = 'http://home.love2c.cc:2096'
-const apiUrl = 'https://home.note.pet'
+const apiUrl = 'http://home.love2c.cc:2096'
+// const apiUrl = 'https://home.note.pet:2096'
 const socket = io(apiUrl);
 
 function PeerCallStream(peers: string[] = []) {
