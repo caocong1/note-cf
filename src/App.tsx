@@ -11,9 +11,9 @@ let videoStream: MediaStream | null = null
 const files: Record<string, File> = {}
 let streamingId: string
 const chunkSize = 1024 * 1024 * 2
-const apiUrl = 'http://localhost:23335'
+// const apiUrl = 'http://localhost:23335'
 // const apiUrl = 'http://home.love2c.cc:2096'
-// const apiUrl = 'https://api.note.pet'
+const apiUrl = 'https://api.note.pet'
 // const apiUrl = 'https://1254199563-6r7pvw8t7g-bj.scf.tencentcs.com'
 const socket = io(apiUrl);
 const conns: Record<string, DataConnection> = {}
