@@ -31,6 +31,9 @@ dependencies:
     version: 4.7.5
 
 devDependencies:
+  '@koa/cors':
+    specifier: ^5.0.0
+    version: 5.0.0
   '@types/react':
     specifier: ^18.2.66
     version: 18.2.73
@@ -458,6 +461,13 @@ packages:
 
   /@humanwhocodes/object-schema@2.0.2:
     resolution: {integrity: sha512-6EwiSjwWYP7pTckG6I5eyFANjPhmPjUX9JRLUSfNPC7FX7zK9gyZAfUEaECL6ALTpGX5AjnBq3C9XmVWPitNpw==}
+    dev: true
+
+  /@koa/cors@5.0.0:
+    resolution: {integrity: sha512-x/iUDjcS90W69PryLDIMgFyV21YLTnG9zOpPXS7Bkt2b8AsY3zZsIpOLBkYr9fBcF3HbkKaER5hOBZLfpLgYNw==}
+    engines: {node: '>= 14.0.0'}
+    dependencies:
+      vary: 1.1.2
     dev: true
 
   /@msgpack/msgpack@2.8.0:
