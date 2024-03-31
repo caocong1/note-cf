@@ -585,7 +585,7 @@ const latestContent: { [key: string]: string } = {}
 
 function inputChange(content: string) {
     const promises = globalPeers.filter(peerId => peerId !== peer.id).map(peerId => new Promise<void>((resolve) => {
-        console.log('conns[peerId]', conns[peerId], peerId)
+        // console.log('conns[peerId]', conns[peerId], peerId)
         sendContent(content)
         function sendContent(content: string) {
             latestContent[peerId] = content
