@@ -69,6 +69,6 @@ io.on('connection', socket => {
     })
 })
 
-server.listen(2096, () => {
-    console.log('listening on *:2096');
+server.listen(23335, () => {
+    console.log('listening on *:23335');
 });
