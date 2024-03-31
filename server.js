@@ -1,6 +1,7 @@
 import Koa  from 'koa';
 import {Server} from 'socket.io'
 import http from 'http';
+import cors from '@koa/cors';
 
 let input
 let peers = []
@@ -12,6 +13,7 @@ const io = new Server(server, {
     maxHttpBufferSize: 1e8,
     cors: true,
 });
+app.use(cors());
 
 io.on('connection', socket => {
     let uuid
