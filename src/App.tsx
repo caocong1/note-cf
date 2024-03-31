@@ -47,6 +47,7 @@ function stopStream() {
 
 let globalPeers: string[] = []
 const receiveFiles: { [filename: string]: Uint8Array } = {}
+let playingPeerId: string = ''
 
 const Home = () => {
     const [mounted, setMounted] = useState(false);
@@ -110,18 +111,20 @@ const Home = () => {
                 // socket.emit('add-peer', id)
             })
             peer.on('call', function (call) {
-                // console.log('peer call')
+                // console.log('peer call', call, call.peer, peer.id)
+                if (playingPeerId === call.peer) return
                 call.answer();
                 call.on('stream', function (remoteStream) {
                     // console.log('call stream', remoteStream)
-                    stopStream()
-                    setOpenModal(false)
-                    setMinModal(false)
                     Modal.destroyAll()
                     Modal.confirm({
                         title: '提示',
                         content: '是否观看远程桌面共享？',
                         onOk() {
+                            stopStream()
+                            setOpenModal(false)
+                            setMinModal(false)
+                            playingPeerId = call.peer
                             showVideo(remoteStream)
                         },
                     })
@@ -248,7 +251,7 @@ const Home = () => {
             // })
 
             socket.on('update-peers', res => {
-                //    console.log('update-peers', res)
+                // console.log('update-peers', res)
                 // peers = res
                 setPeers(res)
                 globalPeers = res
@@ -282,6 +285,7 @@ const Home = () => {
             stopStream()
             setOpenModal(false)
             setMinModal(false)
+            playingPeerId = ''
         })
 
         socket.on('start-streaming', id => {
@@ -383,6 +387,7 @@ const Home = () => {
         setOpenModal(false)
         stopStream()
         setMinModal(false)
+        playingPeerId = ''
     }, [])
 
     if (!mounted) return <></>;
@@ -453,6 +458,7 @@ const Home = () => {
                             stopStream()
                             setOpenModal(false)
                             setMinModal(false)
+                            playingPeerId = ''
                         };
 
                         // peers.forEach((peerId) => {
