@@ -12,28 +12,28 @@ export default defineConfig({
         // },
         manualChunks(id) {
           if (id.includes('node_modules')) {
-            if(id.includes('/react-dom')){
-              return 'react-dom'
-            }
             if(id.includes('/react')){
               return 'react'
             }
-            if(id.includes('rc-')){
-              return 'rc'
+            if(id.includes('/react-dom')){
+              return 'react-dom'
             }
-            if(id.includes('@ant-design+icons')){
-              return 'icons'
+            // if(id.includes('@ant-design') || id.includes('antd') || id.includes('rc-')){
+            //   return 'antd'
+            // }
+            if(!id.includes('@ant-design') && !id.includes('antd') && !id.includes('rc-')){
+              return 'vendors'
             }
-            if(id.includes('@ant-design+')){
-              return 'antd1'
-            }
-            if(id.includes('antd')){
-              return 'antd'
-            }
-            if(id.includes('babel')){
-              return 'babel'
-            }
-            console.log(id)
+            // if(id.includes('@ant-design+icons')){
+            //   return 'icons'
+            // }
+            // if(id.includes('@ant-design+')){
+            //   return 'antd1'
+            // }
+            // if(id.includes('babel')){
+            //   return 'babel'
+            // }
+            // console.log(id)
           }
           
         }
