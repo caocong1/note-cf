@@ -105,7 +105,6 @@ const Home = () => {
             // console.log('peer', uuid, peer.id, peer)
             peer = peerUrl ? new Peer(uuid, {
                 host: peerUrl,
-                port: 23334,
                 secure: true,
                 // path: '/api',
             }) : new Peer(uuid)
