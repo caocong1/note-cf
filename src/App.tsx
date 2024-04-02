@@ -56,8 +56,6 @@ const Home = () => {
     const [mounted, setMounted] = useState(false);
     useEffect(() => {
         setMounted(true);
-
-        console.log(location.pathname)
     }, []);
 
     const [openModal, setOpenModal] = useState(false)
@@ -103,7 +101,7 @@ const Home = () => {
             peer = peerUrl ? new Peer(uuid, {
                 host: peerUrl,
                 port: 23334,
-                secure: peerUrl !=='localhost',
+                secure: peerUrl !== 'localhost',
                 // path: '/api',
             }) : new Peer(uuid)
             peer.on('open', function (id) {
