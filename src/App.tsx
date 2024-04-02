@@ -87,6 +87,11 @@ const Home = () => {
         let peerOpen: boolean = false
         let initResult: any = null
 
+        socket.on('error', (e) => {
+            console.error(e)
+            notification.error({ message: 'Socket连接失败请重试' })
+        })
+
         socket.on('connect', () => {
             console.log('connected')
             if (localStorage.uuid) {
@@ -148,6 +153,11 @@ const Home = () => {
                     conns[conn.peer] = conn
                     connectToPeer(conn)
                 })
+            })
+
+            peer.on('error', function (e) {
+                console.error(e)
+                notification.error({ message: 'Peer连接失败请重试' })
             })
             // peer.on('disconnected', function() {
             //     console.log('peer disconnected')
@@ -240,7 +250,7 @@ const Home = () => {
                         const file = files[filename]
                         const sendFileConn = conns[peerId];
                         if (!sendFileConn) {
-                            notification.error({ message: '连接失败请重试' })
+                            notification.error({ message: '文件连接失败请重试' })
                             return
                         }
                         sendFileConn.send({
@@ -289,7 +299,7 @@ const Home = () => {
                         }
                         const sendFileConn = conns[peerId];
                         if (!sendFileConn) {
-                            notification.error({ message: '连接失败请重试' })
+                            notification.error({ message: '文件传输失败请重试' })
                             return
                         }
                         sendFileConn.send({ type: 'send-file-error' });
@@ -431,7 +441,7 @@ const Home = () => {
                     if (conn) {
                         conn.send({ type: 'request-file', filename: el.innerText, peerId: peer.id });
                     } else {
-                        notification.error({ message: '连接失败请重试' })
+                        notification.error({ message: '请求文件连接失败请重试' })
                     }
                 } else {
                     notification.error({ message: '找不到发送文件的用户id，请重新发送' })
