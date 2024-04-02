@@ -101,7 +101,7 @@ const Home = () => {
             peer = peerUrl ? new Peer(uuid, {
                 host: peerUrl,
                 port: 23334,
-                secure: peerUrl !== 'localhost',
+                secure: true,
                 // path: '/api',
             }) : new Peer(uuid)
             peer.on('open', function (id) {
