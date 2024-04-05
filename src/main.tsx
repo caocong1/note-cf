@@ -1,6 +1,7 @@
 import ReactDOM from 'react-dom/client'
-import App from './App.tsx'
 import './index.css'
-import Base from './Base.tsx'
+import Layout from './Layout.tsx'
+import { Provider } from 'jotai'
+import { store } from './atom.ts'
 
-ReactDOM.createRoot(document.getElementById('root')!).render(<Base />)
+ReactDOM.createRoot(document.getElementById('root')!).render(<Provider store={store}><Layout /></Provider>)

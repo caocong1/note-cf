@@ -93,7 +93,7 @@ const Home = () => {
         })
 
         socket.on('connect', () => {
-            console.log('connected')
+            // console.log('connected')
             if (localStorage.uuid) {
                 uuid = localStorage.uuid
             } else {
@@ -144,7 +144,7 @@ const Home = () => {
             })
 
             peer.on('connection', function (conn) {
-                console.log('peer connected', conn.peer)
+                // console.log('peer connected', conn.peer)
                 if (conns[conn.peer]) {
                     return
                 }
@@ -164,7 +164,7 @@ const Home = () => {
             // })
 
             socket.on('update-peers', res => {
-                console.log('update-peers', res)
+                // console.log('update-peers', res)
                 // peers = res
                 setPeers(res)
                 globalPeers = res
