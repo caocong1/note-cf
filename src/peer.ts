@@ -12,13 +12,15 @@ if (!localStorage.myPeerId) {
 
 export let peer: Peer;
 
+const host = import.meta.env.VITE_HOST;
+const port = import.meta.env.VITE_PORT;
+const secure = import.meta.env.VITE_SECURE === "true";
+
 export function initPeer() {
   peer = new Peer(myPeerId, {
-    // host: api || 'localhost',
-    // port: 9000,
-    host: "localhost",
-    port: 9000,
-    // secure: !!api,
+    host,
+    port,
+    secure,
     path: "/peerjs",
   });
 

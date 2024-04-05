@@ -6,19 +6,19 @@ export default defineConfig({
   server: {
     host: "0.0.0.0",
     port: 23336,
-    proxy: {
-      "/api": {
-        target: "http://localhost:9000",
-        changeOrigin: true,
-        rewrite: (path) => path.replace(/^\/api/, ""),
-      },
-      "/ws": {
-        target: "localhost:9000",
-        changeOrigin: true,
-        rewrite: (path) => path.replace(/^\/ws/, ""),
-        ws: true,
-      },
-    },
+    // proxy: {
+    //   "/api": {
+    //     target: "http://localhost:23335",
+    //     changeOrigin: true,
+    //     rewrite: (path) => path.replace(/^\/api/, ""),
+    //   },
+    //   "/ws": {
+    //     target: "localhost:23335",
+    //     changeOrigin: true,
+    //     rewrite: (path) => path.replace(/^\/ws/, ""),
+    //     ws: true,
+    //   },
+    // },
   },
   build: {
     rollupOptions: {

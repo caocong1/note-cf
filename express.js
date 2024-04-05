@@ -1,5 +1,6 @@
 import express from "express";
 import { ExpressPeerServer } from "peer";
+import cors from "cors";
 
 let content = {};
 let peers = {};
@@ -7,6 +8,7 @@ let peers = {};
 const app = express();
 
 app.use(express.json());
+app.use(cors());
 
 app.post("/get-peers", (req, res) => {
   // console.log(req.body);
@@ -54,7 +56,7 @@ app.post("/note-change", (req, res) => {
   res.send({ msg: "success" });
 });
 
-const server = app.listen(9000);
+const server = app.listen(23335);
 
 const peerServer = ExpressPeerServer(server, {
   debug: true,
