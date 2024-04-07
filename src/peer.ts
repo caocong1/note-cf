@@ -51,27 +51,6 @@ export function initPeer() {
     );
   });
 
-  peer.on("call", function (call) {
-    console.log("peer call", call, call.peer, peer.id);
-    //   if (playingPeerId === call.peer) return;
-    //   call.answer();
-    //   call.on("stream", function (remoteStream) {
-    //     // console.log('call stream', remoteStream)
-    //     Modal.destroyAll();
-    //     Modal.confirm({
-    //       title: "提示",
-    //       content: "是否观看远程桌面共享？",
-    //       onOk() {
-    //         stopStream();
-    //         setOpenModal(false);
-    //         setMinModal(false);
-    //         playingPeerId = call.peer;
-    //         showVideo(remoteStream);
-    //       },
-    //     });
-    //   });
-  });
-
   peer.on("connection", function (conn) {
     console.log("peer connected", conn.peer);
     if (conn.peer === myPeerId) return;
