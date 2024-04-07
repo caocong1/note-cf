@@ -52,6 +52,10 @@ const Layout: React.FC = () => {
             padding: "0 16px",
             boxSizing: "border-box",
             borderTop: "1px solid #eee",
+            position: "fixed",
+            bottom: 0,
+            left: 0,
+            background: "#fff",
           }}
         >
           <div style={{ display: "flex" }}>
