@@ -57,16 +57,6 @@ const File: React.FC = () => {
               const subFiles = [];
               for await (const fileHandle of fileHandles) {
                 const relativePaths = await dirHandle.resolve(fileHandle);
-                // const writable = await createFileWritable(
-                //   dirHandle,
-                //   fileHandle.name,
-                //   relativePaths.slice(1),
-                // );
-                console.log(
-                  fileHandle.name,
-                  relativePaths,
-                  relativePaths.slice(0, -1),
-                );
                 subFiles.push({
                   id: crypto.randomUUID(),
                   name: fileHandle.name,
@@ -193,7 +183,6 @@ const File: React.FC = () => {
                             window as any
                           ).showDirectoryPicker();
                           for await (const subFile of record.subFiles) {
-                            console.log(subFile);
                             const writable = await createFileWritable(
                               dirHandle,
                               subFile.name,

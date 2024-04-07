@@ -6,7 +6,7 @@ import PeerConnection, {
   jsonAddToBoard,
   noteChange,
 } from "./PeerConnection";
-import { notification } from "antd";
+import { Modal, notification } from "antd";
 import request from "./request";
 
 export const myPeerId = localStorage.myPeerId || crypto.randomUUID();
@@ -20,6 +20,8 @@ export let peer: Peer;
 const host = import.meta.env.VITE_HOST;
 const port = import.meta.env.VITE_PORT;
 const secure = import.meta.env.VITE_SECURE === "true";
+
+let streamingId = '';
 
 export function initPeer() {
   peer = new Peer(myPeerId, {
@@ -90,6 +92,32 @@ export function initPeer() {
     }
   });
 
+  peer.on("call", function (call) {
+    // console.log('peer call', call, call.peer, peer.id)
+    if (streamingId === call.peer || streamingId === myPeerId) return;
+    call.answer();
+    call.on("stream", function (remoteStream) {
+      // console.log('call stream', remoteStream)
+      Modal.destroyAll();
+      Modal.confirm({
+        title: "提示",
+        content: "是否观看远程桌面共享？",
+        onOk() {
+          const video = document.getElementById("video") as HTMLVideoElement
+          if (video) {
+            video.srcObject = remoteStream;
+            video.play();
+          }
+          // stopStream();
+          // setOpenModal(false);
+          // setMinModal(false);
+          // playingPeerId = call.peer;
+          // showVideo(remoteStream);
+        },
+      });
+    });
+  });
+
   peer.on("error", function (e) {
     console.error(e);
     notification.error({ message: "Peer连接失败请重试" });
@@ -109,5 +137,14 @@ function addNewPeer(res: PeerData) {
   store.set(peersAtom, (old) => {
     const isExist = old.some((peer) => peer.peerId === res.peerId);
     return isExist ? old : [...old, new PeerConnection(res)];
+  });
+}
+
+export function callToPeers(stream: any) {
+  const peers = store.get(peersAtom);
+  peers.forEach((p) => {
+    if (p.peerId !== myPeerId && p.conn && p.status === "connected") {
+      peer.call(p.peerId, stream);
+    }
   });
 }

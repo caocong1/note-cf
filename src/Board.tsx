@@ -1,18 +1,11 @@
 import React, { useEffect, useRef } from "react";
 import { canvas, initBoardCanvas } from "./PeerConnection";
-import { useAtom } from "jotai";
-import { boardDragAtom } from "./atom";
 import { Button } from "antd";
 import ClearOutlined from "@ant-design/icons/lib/icons/ClearOutlined";
 import { sendDataToPeers } from "./peer";
 
 const Board: React.FC = () => {
-  // const ref = useBoardRef();
-  // const peers = useAtomValue(peersAtom);
-  // const peersSplitAtoms = splitAtom(peersAtom);
-  // const peersAtoms = useAtomValue(peersSplitAtoms);
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  // const drag = useAtomValue(boardDragAtom);
 
   useEffect(() => {
     canvasRef.current!.width = window.innerWidth;
@@ -30,8 +23,8 @@ const Board: React.FC = () => {
       canvasRef.current!.style.height = newHeight + "px";
 
       // 重置fabric画布的大小
-      canvas.setWidth(newWidth);
-      canvas.setHeight(newHeight);
+      canvas.width = newWidth;
+      canvas.height = newHeight;
       canvas.calcOffset();
       canvas.renderAll();
     }
@@ -86,53 +79,3 @@ const ToolBar: React.FC = () => {
     </div>
   );
 };
-
-// async function syncBoard() {
-//   const component = store.get(componentAtom);
-//   if (component !== "board") return;
-//   const data = (await boardRef?.current?.exportPaths()) || [];
-//   sendDataToPeers({ type: "board-change", data });
-//   await request("board-change", {
-//     pathname: location.pathname,
-//     data,
-//   });
-//   window.requestAnimationFrame(syncBoard);
-// }
-
-// const PeerBoard: React.FC<{ peerAtom: PrimitiveAtom<PeerConnection> }> = ({
-//   peerAtom,
-// }) => {
-//   const peerBoardRef = useRef<ReactSketchCanvasRef>(null);
-//   const peer = useAtomValue(peerAtom);
-
-//   useEffect(() => {
-//     if (peer.peerId === myPeerId) return;
-//     if (peer.board?.length) {
-//       peerBoardRef.current?.loadPaths(peer.board);
-//     } else {
-//       peerBoardRef.current?.clearCanvas();
-//     }
-//   }, [peer.board, peer.peerId]);
-
-//   return (
-//     peer.peerId !== myPeerId && (
-//       <div
-//         style={{
-//           position: "absolute",
-//           top: 0,
-//           left: 0,
-//           width: "100vw",
-//           height: "calc(100vh - 50px)",
-//         }}
-//       >
-//         <ReactSketchCanvas
-//           ref={peerBoardRef}
-//           width="100%"
-//           height="100%"
-//           canvasColor="transparent"
-//           strokeColor="#a855f7"
-//         />
-//       </div>
-//     )
-//   );
-// };
