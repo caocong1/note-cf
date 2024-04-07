@@ -21,3 +21,14 @@ export const peerAtomsAtom = splitAtom(peersAtom);
 // export const contentAtom = atom("");
 
 export const pageLoadingAtom = atom(true);
+
+export const pathItemsAtom = atom<any[]>([]);
+
+export const componentAtom = atomWithStorage(
+  "component",
+  localStorage.getItem("component") || "note",
+);
+
+export const boardDragAtom = atom(false);
+
+export const filesAtom = atom<any[]>([]);

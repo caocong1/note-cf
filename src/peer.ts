@@ -1,6 +1,11 @@
 import Peer from "peerjs";
 import { myNameAtom, pageLoadingAtom, peersAtom, store } from "./atom";
-import PeerConnection, { PeerData, noteChange } from "./PeerConnection";
+import PeerConnection, {
+  PeerData,
+  initConn,
+  jsonAddToBoard,
+  noteChange,
+} from "./PeerConnection";
 import { notification } from "antd";
 import request from "./request";
 
@@ -30,7 +35,7 @@ export function initPeer() {
     request("add-peer", { pathname: location.pathname, peerId: id, name }).then(
       (res) => {
         // console.log("add-peer", res);
-        const { peers, content } = res;
+        const { peers, content, board: boardPath } = res;
         store.set(
           peersAtom,
           peers.map((peer: PeerData) => new PeerConnection(peer)),
@@ -38,6 +43,8 @@ export function initPeer() {
         // store.set(contentAtom, content);
         noteChange(content);
         store.set(pageLoadingAtom, false);
+        boardPath?.length && jsonAddToBoard(boardPath);
+        // boardChange(boardPath[myPeerId]);
       },
     );
   });
@@ -64,7 +71,7 @@ export function initPeer() {
   });
 
   peer.on("connection", function (conn) {
-    // console.log("peer connected", conn.peer);
+    console.log("peer connected", conn.peer);
     if (conn.peer === myPeerId) return;
     const peers = store.get(peersAtom);
     const index = peers.findIndex(
@@ -79,13 +86,7 @@ export function initPeer() {
           addNewPeer({ ...res, conn });
         }
       });
-      //   conn.on("open", () => {
-      //     console.log("conn open 000", conn.peer);
-      //     conn.on("data", (data) => {
-      //       console.log("Received", data);
-      //     });
-      //     conn.send("Hello!");
-      //   });
+      initConn(conn);
     }
   });
 

@@ -2,12 +2,13 @@ import express from "express";
 import { ExpressPeerServer } from "peer";
 import cors from "cors";
 
-let content = {};
 let peers = {};
+let content = {};
+let board = {};
 
 const app = express();
 
-app.use(express.json());
+app.use(express.json({ limit: "100mb" }));
 app.use(cors());
 
 app.post("/get-peers", (req, res) => {
@@ -28,7 +29,11 @@ app.post("/add-peer", (req, res) => {
   }
   // console.log("peers", peers);
   content[pathname] = content[pathname] || "";
-  res.json({ peers: peers[pathname], content: content[pathname] });
+  res.json({
+    peers: peers[pathname],
+    content: content[pathname],
+    board: board[pathname],
+  });
 });
 
 app.post("/get-peer", (req, res) => {
@@ -53,6 +58,12 @@ app.post("/change-name", (req, res) => {
 app.post("/note-change", (req, res) => {
   const { pathname, data } = req.body;
   content[pathname] = data;
+  res.send({ msg: "success" });
+});
+
+app.post("/board-change", (req, res) => {
+  const { pathname, boardPaths } = req.body;
+  board[pathname] = boardPaths;
   res.send({ msg: "success" });
 });
 
