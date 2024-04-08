@@ -18,6 +18,7 @@ import request from "./request";
 import { FabricImage, Canvas } from "fabric";
 
 export const myPeerId = localStorage.myPeerId || crypto.randomUUID();
+export const roomName = decodeURI(location.pathname);
 
 if (!localStorage.myPeerId) {
   localStorage.myPeerId = myPeerId;
@@ -26,6 +27,7 @@ if (!localStorage.myPeerId) {
 export let peer: Peer;
 
 const host = import.meta.env.VITE_HOST;
+const path = import.meta.env.VITE_PATH;
 const port = import.meta.env.VITE_PORT;
 const secure = import.meta.env.VITE_SECURE === "true";
 
@@ -69,13 +71,13 @@ export function initPeer() {
     host,
     port,
     secure,
-    path: "/peerjs",
+    path:  path + "peerjs",
   });
 
   peer.on("open", function (id) {
     console.log("My peer ID is: " + id);
     const name = store.get(myNameAtom);
-    request("add-peer", { pathname: location.pathname, peerId: id, name }).then(
+    request("add-peer", { pathname: roomName, peerId: id, name }).then(
       (res) => {
         // console.log("add-peer", res);
         const { peers, content, board: boardPath } = res;
@@ -101,7 +103,7 @@ export function initPeer() {
     );
     if (index === -1) {
       request("get-peer", {
-        pathname: location.pathname,
+        pathname: roomName,
         peerId: conn.peer,
       }).then((res) => {
         if (res) {

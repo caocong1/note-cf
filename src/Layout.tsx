@@ -13,6 +13,7 @@ import {
   initPeer,
   myPeerId,
   resetVideo,
+  roomName,
   sendDataToPeers,
   video,
 } from "./peer";
@@ -25,8 +26,6 @@ import File from "./File";
 import StopSvg from "./assets/stop.svg?react";
 import PlaySvg from "./assets/play.svg?react";
 import Icon from "@ant-design/icons";
-
-const pathname = location.pathname;
 
 const badgeStatus: Record<string, PresetStatusColorType> = {
   connected: "success",
@@ -110,7 +109,7 @@ const Layout: React.FC = () => {
               <ChangeName />
               <Badge count={peers.length} color="blue">
                 <Tag color="purple">
-                  {pathname === "/" ? "<public>" : pathname.replace("/", "")}
+                  {roomName === "/" ? "<public>" : roomName.slice(1)}
                 </Tag>
               </Badge>
             </div>

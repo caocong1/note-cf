@@ -1,5 +1,5 @@
 import { DataConnection } from "peerjs";
-import { myPeerId, peer, resetVideo, sendDataToPeers } from "./peer";
+import { myPeerId, peer, resetVideo, roomName, sendDataToPeers } from "./peer";
 import {
   filesAtom,
   peersAtom,
@@ -352,7 +352,7 @@ function removeBoardObject(data: any) {
 export function saveBoard() {
   const objects = canvas.getObjects();
   request("board-change", {
-    pathname: location.pathname,
+    pathname: roomName,
     boardPaths: objects.map((o: any) => ({ ...o.toJSON(), id: o.id })),
   });
 }

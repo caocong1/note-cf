@@ -3,7 +3,7 @@ import { useAtom, useSetAtom } from "jotai";
 import { myNameAtom, peersAtom } from "../atom";
 import { useCallback, useEffect, useRef, useState } from "react";
 import request from "../request";
-import { myPeerId, sendDataToPeers } from "../peer";
+import { myPeerId, roomName, sendDataToPeers } from "../peer";
 
 const ChangeName: React.FC = () => {
   const [myName, setMyName] = useAtom(myNameAtom);
@@ -22,7 +22,7 @@ const ChangeName: React.FC = () => {
         },
       });
       request("change-name", {
-        pathname: location.pathname,
+        pathname: roomName,
         peerId: myPeerId,
         name,
       });
