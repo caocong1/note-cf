@@ -1,6 +1,8 @@
 import express from 'express'
 import { ExpressPeerServer } from 'peer'
 import cors from 'cors'
+import https from 'https'
+import fs from 'fs'
 
 let peers = {}
 let content = {}
@@ -67,7 +69,16 @@ app.post('/board-change', (req, res) => {
   res.send({ msg: 'success' })
 })
 
-const server = app.listen(23335)
+// const server = app.listen(23335)
+const server = https
+  .createServer(
+    {
+      key: fs.readFileSync('C:\\love2c.cc_nginx\\love2c.cc.key'),
+      cert: fs.readFileSync('C:\\love2c.cc_nginx\\love2c.cc_bundle.crt'),
+    },
+    app,
+  )
+  .listen(23335)
 
 const peerServer = ExpressPeerServer(server, {
   debug: true,

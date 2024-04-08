@@ -103,6 +103,7 @@ const Layout: React.FC = () => {
           </Dropdown>
           <div>
             <Radio.Group
+              size="small"
               value={component}
               onChange={(e) => setComponent(e.target.value)}
             >
