@@ -1,14 +1,30 @@
 import React, { useLayoutEffect } from "react";
 import { useAtom, useAtomValue } from "jotai";
-import { componentAtom, pageLoadingAtom, peersAtom } from "./atom";
-import { Badge, Dropdown, Radio, Spin } from "antd";
-import { initPeer } from "./peer";
+import {
+  componentAtom,
+  pageLoadingAtom,
+  peersAtom,
+  remoteStreamDataAtom,
+  streamingDataAtom,
+} from "./atom";
+import { Badge, Dropdown, Radio, Spin, Tag } from "antd";
+import {
+  callToPeers,
+  initPeer,
+  myPeerId,
+  resetVideo,
+  sendDataToPeers,
+  video,
+} from "./peer";
 import { PresetStatusColorType } from "antd/es/_util/colors";
 import ChangeName from "./component/ChangeName";
 import Note from "./Note";
 import Screen from "./Screen";
 import Board from "./Board";
 import File from "./File";
+import StopSvg from "./assets/stop.svg?react";
+import PlaySvg from "./assets/play.svg?react";
+import Icon from "@ant-design/icons";
 
 const pathname = location.pathname;
 
@@ -58,28 +74,11 @@ const Layout: React.FC = () => {
             background: "#fff",
           }}
         >
-          <div style={{ display: "flex" }}>
-            <ChangeName />
-            {/* <div style={{ cursor: "pointer" }} onClick={() => {}}>
-              {myName}
-            </div> */}
-            {/* ({myPeerId}) */}
-          </div>
-          <div>
-            <Radio.Group
-              value={component}
-              onChange={(e) => setComponent(e.target.value)}
-            >
-              <Radio.Button value="note">Note</Radio.Button>
-              <Radio.Button value="file">File</Radio.Button>
-              <Radio.Button value="board">Board</Radio.Button>
-              <Radio.Button value="screen">Screen</Radio.Button>
-            </Radio.Group>
-          </div>
-          <div>
-            <Dropdown
-              menu={{
-                items: peers.map((peer) => ({
+          <Dropdown
+            menu={{
+              items: peers
+                .filter((peer) => peer.peerId !== myPeerId)
+                .map((peer) => ({
                   key: peer.peerId,
                   label: (
                     <div
@@ -96,16 +95,40 @@ const Layout: React.FC = () => {
                     </div>
                   ),
                 })),
+            }}
+            placement="topLeft"
+            arrow
+          >
+            <div
+              style={{
+                display: "flex",
+                gap: 16,
+                alignItems: "baseline",
+                cursor: "pointer",
               }}
-              placement="topRight"
-              arrow
             >
-              <div>
-                房间：
-                {pathname === "/" ? "<public>" : pathname.replace("/", "")}
-                ，人数：{peers.length}
-              </div>
-            </Dropdown>
+              <ChangeName />
+              <Badge count={peers.length} color="blue">
+                <Tag color="purple">
+                  {pathname === "/" ? "<public>" : pathname.replace("/", "")}
+                </Tag>
+              </Badge>
+            </div>
+          </Dropdown>
+          <div>
+            <Radio.Group
+              value={component}
+              onChange={(e) => setComponent(e.target.value)}
+            >
+              <Radio.Button value="note">Note</Radio.Button>
+              <Radio.Button value="file">File</Radio.Button>
+              <Radio.Button value="board">Board</Radio.Button>
+              <Radio.Button value="screen">
+                <RemoteStreamBadge />
+                Screen
+                <ScreenShareButton />
+              </Radio.Button>
+            </Radio.Group>
           </div>
         </div>
       </div>
@@ -114,3 +137,66 @@ const Layout: React.FC = () => {
 };
 
 export default Layout;
+
+const RemoteStreamBadge: React.FC = () => {
+  const remoteStreamData = useAtomValue(remoteStreamDataAtom);
+  return (
+    <Badge
+      status={remoteStreamData.length ? "processing" : "default"}
+      style={{ paddingRight: 8 }}
+    />
+  );
+};
+
+const ScreenShareButton: React.FC = () => {
+  const [streamingData, setStreamingData] = useAtom(streamingDataAtom);
+
+  if (streamingData.id) {
+    return (
+      <Icon
+        component={StopSvg}
+        style={{ color: "red", marginLeft: 8 }}
+        onClick={() => {
+          if (streamingData.id === myPeerId) {
+            sendDataToPeers({
+              type: "screen-stop",
+              data: { peerId: myPeerId },
+            });
+          }
+          resetVideo();
+        }}
+      />
+    );
+  } else {
+    return (
+      <Icon
+        component={PlaySvg}
+        style={{ color: "green", marginLeft: 8 }}
+        onClick={() => {
+          navigator.mediaDevices
+            .getDisplayMedia({
+              video: true,
+              audio: false,
+            })
+            .then(function (stream) {
+              callToPeers(stream);
+              video.srcObject = stream;
+              video.play();
+              setStreamingData({
+                id: myPeerId,
+                stream,
+              });
+            })
+            .catch((e) => {
+              console.log("getDisplayMedia error", e);
+              resetVideo();
+              sendDataToPeers({
+                type: "screen-stop",
+                data: { peerId: myPeerId },
+              });
+            });
+        }}
+      />
+    );
+  }
+};

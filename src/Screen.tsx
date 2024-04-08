@@ -1,77 +1,50 @@
 import { Button } from "antd";
-import { callToPeers } from "./peer";
+import { initScreenCanvas, resetVideo, screenCanvas, video } from "./peer";
 import { useEffect } from "react";
 import * as fabric from "fabric";
-
-const video = document.createElement("video");
-// const video = document.getElementById("video") as HTMLVideoElement;
-const videoWidth = window.outerWidth * window.devicePixelRatio;
-const videoHeight = window.outerHeight * window.devicePixelRatio;
-video.width = videoWidth;
-video.height = videoHeight;
-// document.body.appendChild(video);
-let canvas: fabric.Canvas;
+import { useAtom, useAtomValue } from "jotai";
+import { remoteStreamDataAtom, streamingDataAtom } from "./atom";
+import { PlayCircleTwoTone } from "@ant-design/icons";
 
 const Screen: React.FC = () => {
   // const videoRef = useRef<HTMLVideoElement>(null);
+  const [streamingData, setStreamingData] = useAtom(streamingDataAtom);
+  const remoteStreamData = useAtomValue(remoteStreamDataAtom);
+
   useEffect(() => {
-    const screenCanvas = document.getElementById(
-      "screen-canvas",
-    ) as HTMLCanvasElement;
+    initScreenCanvas();
+    resetVideo();
 
-    // const video = document.getElementById("video") as HTMLVideoElement;
-    // video!.width = window.innerWidth;
-    // video!.height = window.innerHeight - 50;
-
-    screenCanvas.width = window.innerWidth;
-    screenCanvas.height = window.innerHeight - 50;
-
-    canvas = new fabric.Canvas(screenCanvas);
-    // resizeCanvas();
-    const video1 = new fabric.FabricImage(video, {
-      left: 0,
-      top: 0,
-      width: videoWidth,
-      height: videoHeight,
-      // angle: -15,
-      // originX: "center",
-      // originY: "center",
-      // objectCaching: false,
-      selectable: false,
-    });
-    canvas.add(video1);
-    // console.log(video1);
-    // initBoardCanvas(canvasRef);
-    canvas.on("mouse:wheel", (opt) => {
+    screenCanvas.on("mouse:wheel", (opt) => {
       const delta = opt.e.deltaY; // 滚轮，向上滚一下是 -100，向下滚一下是 100
-      let zoom = canvas.getZoom(); // 获取画布当前缩放值
+      let zoom = screenCanvas.getZoom(); // 获取画布当前缩放值
       zoom *= 0.999 ** delta;
       if (zoom > 20) zoom = 20; // 限制最大缩放级别
       if (zoom < 0.01) zoom = 0.01; // 限制最小缩放级别
 
       // 以鼠标所在位置为原点缩放
       const point = new fabric.Point(opt.e.offsetX, opt.e.offsetY);
-      canvas.zoomToPoint(
+      screenCanvas.zoomToPoint(
         point,
         zoom, // 传入修改后的缩放级别
       );
     });
     let mouseDown = false;
-    canvas.on("mouse:up", () => {
+    screenCanvas.on("mouse:up", () => {
       // console.log("mouse:up", e);
       mouseDown = false;
     });
-    canvas.on("mouse:down", () => {
+    screenCanvas.on("mouse:down", () => {
       // console.log("mouse:down", e);
       mouseDown = true;
     });
-    canvas.on("mouse:move", (e) => {
+    screenCanvas.on("mouse:move", (e) => {
       // console.log("mouse:move", e);
       // const drag = store.get(boardDragAtom);
       const event: any = e?.e;
       if (mouseDown && event) {
         const point = new fabric.Point(event.movementX, event.movementY);
-        canvas.relativePan(point);
+        screenCanvas.relativePan(point);
       }
     });
 
@@ -79,41 +52,31 @@ const Screen: React.FC = () => {
       const newWidth = window.innerWidth;
       const newHeight = window.innerHeight - 50;
 
-      // video.width = newWidth;
-      // video.height = newHeight;
-      screenCanvas.width = newWidth;
-      screenCanvas.height = newHeight;
-      screenCanvas.style.width = newWidth + "px";
-      screenCanvas.style.height = newHeight + "px";
+      const canvasEl = document.getElementById(
+        "screen-canvas",
+      ) as HTMLCanvasElement;
+      canvasEl.width = newWidth;
+      canvasEl.height = newHeight;
+      canvasEl.style.width = newWidth + "px";
+      canvasEl.style.height = newHeight + "px";
 
       // 重置fabric画布的大小
-      canvas.width = newWidth;
-      canvas.height = newHeight;
-      canvas.calcOffset();
-      canvas.renderAll();
+      screenCanvas.width = newWidth;
+      screenCanvas.height = newHeight;
+      screenCanvas.calcOffset();
+      screenCanvas.renderAll();
     }
 
     window.addEventListener("resize", resizeCanvas);
 
-    console.log(video.videoWidth, video.videoHeight);
     fabric.util.requestAnimFrame(function render() {
-      // if (
-      //   videoWidth !== video.videoWidth ||
-      //   videoHeight !== video.videoHeight
-      // ) {
-      //   videoWidth = video.videoWidth;
-      //   videoHeight = video.videoHeight;
-      //   video1.width = videoWidth;
-      //   video1.height = videoHeight;
-      // }
-      // console.log(videoWidth, videoHeight);
-      canvas.renderAll();
+      screenCanvas.renderAll();
       fabric.util.requestAnimFrame(render);
     });
 
     return () => {
       window.removeEventListener("resize", resizeCanvas);
-      canvas.dispose();
+      screenCanvas.dispose();
     };
   }, []);
 
@@ -127,67 +90,72 @@ const Screen: React.FC = () => {
       }}
     >
       <canvas id="screen-canvas" />
-      {/* <video id="video" /> */}
-      <Button
-        id="share-screen-btn"
-        style={{ position: "absolute", bottom: 70, right: 20 }}
+      {/* {!streamingData.id && (
+        <Button
+          type="primary"
+          style={{ position: "absolute", bottom: 70, right: 20 }}
+          onClick={() => {
+            navigator.mediaDevices
+              .getDisplayMedia({
+                video: true,
+                audio: false,
+              })
+              .then(function (stream) {
+                callToPeers(stream);
+                video.srcObject = stream;
+                video.play();
+                setStreamingData({
+                  id: myPeerId,
+                  stream,
+                });
+              })
+              .catch((e) => {
+                console.log("getDisplayMedia error", e);
+                resetVideo();
+                sendDataToPeers({
+                  type: "screen-stop",
+                  data: { peerId: myPeerId },
+                });
+              });
+          }}
+        >
+          共享屏幕
+        </Button>
+      )} */}
+      {/* <Button
+        style={{ position: "absolute", bottom: 150, right: 20 }}
         onClick={() => {
-          navigator.mediaDevices
-            .getDisplayMedia({
-              video: true,
-              audio: false,
-            })
-            .then(function (stream) {
-              console.log(stream);
-              callToPeers(stream);
-              video.srcObject = stream;
-              video.play();
-              // const video1 = new fabric.FabricImage(video, {
-              //   left: 0,
-              //   top: 0,
-              //   // angle: -15,
-              //   originX: "center",
-              //   originY: "center",
-              //   // objectCaching: false,
-              // });
-              // canvas.add(video1);
-              // console.log(video1, video1.getElement());
-              // (video1.getElement() as any).play();
-              // const video = document.getElementById(
-              //   "video",
-              // ) as HTMLVideoElement;
-              // if (video) {
-              //   video.srcObject = stream;
-              //   video.play();
-              // }
-              // showVideo(stream);
-              // videoStream = stream;
-              // PeerCallStream(peers);
-              // streamingId = peer.id;
-              // socket.emit("start-stream", peer.id);
-              // const videoTrack = stream.getVideoTracks()[0];
-
-              // videoTrack.onended = () => {
-              //   if (streamingId === peer.id) {
-              //     console.log("用户已停止屏幕共享");
-              //     socket.emit("stop-stream", peer.id);
-              //   } else {
-              //     console.log("其他用户已停止屏幕共享");
-              //   }
-              //   // 这里可以执行一些清理或用户通知的操作
-              //   stopStream();
-              //   setOpenModal(false);
-              //   setMinModal(false);
-              //   playingPeerId = "";
-              // };
-            })
-            .catch((e) => {
-              console.log("getDisplayMedia error", e);
-            });
+          resetVideo();
         }}
       >
-        共享屏幕
-      </Button>
+        STOP
+      </Button> */}
+      {!streamingData.id && (
+        <div
+          style={{
+            position: "absolute",
+            bottom: 120,
+            right: 20,
+            display: "flex",
+            flexDirection: "column",
+            gap: 8,
+          }}
+        >
+          {remoteStreamData.map((v) => (
+            <Button
+              key={v.id}
+              icon={<PlayCircleTwoTone />}
+              onClick={() => {
+                video.srcObject = v.stream;
+                video.play();
+                setStreamingData(v);
+              }}
+            >
+              {v.name}
+            </Button>
+          ))}
+        </div>
+      )}
     </div>
   );
 };

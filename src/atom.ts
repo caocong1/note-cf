@@ -32,3 +32,16 @@ export const componentAtom = atomWithStorage(
 export const boardDragAtom = atom(false);
 
 export const filesAtom = atom<any[]>([]);
+
+interface StreamData {
+  id: string;
+  name?: string;
+  stream: MediaStream | null;
+}
+
+export const streamingDataAtom = atom<StreamData>({
+  id: "",
+  stream: null,
+});
+
+export const remoteStreamDataAtom = atom<StreamData[]>([]);

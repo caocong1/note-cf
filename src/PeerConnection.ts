@@ -1,6 +1,12 @@
 import { DataConnection } from "peerjs";
-import { peer, sendDataToPeers } from "./peer";
-import { filesAtom, peersAtom, store } from "./atom";
+import { myPeerId, peer, resetVideo, sendDataToPeers } from "./peer";
+import {
+  filesAtom,
+  peersAtom,
+  remoteStreamDataAtom,
+  store,
+  streamingDataAtom,
+} from "./atom";
 import { boardRef } from "./util/useBoardRef";
 import { CanvasPath } from "react-sketch-canvas";
 import * as fabric from "fabric";
@@ -188,6 +194,10 @@ export function initConn(conn: DataConnection) {
         return peer;
       }),
     );
+    const streamingData = store.get(streamingDataAtom);
+    if (streamingData.id === myPeerId) {
+      peer.call(conn.peer, streamingData.stream!);
+    }
     // this.setStatus("connected");
     conn!.on("data", (res: any) => {
       // console.log("conn data", conn.peer, res);
@@ -225,6 +235,9 @@ export function initConn(conn: DataConnection) {
         case "send-file":
           downloadFile(data);
           break;
+        case "screen-stop":
+          stopScreen(data);
+          break;
       }
     });
     //   this.conn!.send({ type: "hello" });
@@ -232,10 +245,20 @@ export function initConn(conn: DataConnection) {
   conn.on("close", () => {
     // console.log("conn close", conn.peer);
     removePeer(conn.peer);
+    const streamingData = store.get(streamingDataAtom);
+    store.set(remoteStreamDataAtom, (o) => o.filter((v) => v.id !== conn.peer));
+    if (streamingData.id === conn.peer) {
+      resetVideo();
+    }
   });
   conn.on("error", () => {
     // console.log("conn close", this.peerId);
     removePeer(conn.peer);
+    const streamingData = store.get(streamingDataAtom);
+    store.set(remoteStreamDataAtom, (o) => o.filter((v) => v.id !== conn.peer));
+    if (streamingData.id === conn.peer) {
+      resetVideo();
+    }
   });
 }
 
@@ -554,4 +577,15 @@ export async function getFilesRecursively(directoryHandle: any) {
     }
   }
   return files;
+}
+
+function stopScreen(data: any) {
+  const { peerId } = data;
+  const streamingData = store.get(streamingDataAtom);
+  if (peerId !== myPeerId) {
+    store.set(remoteStreamDataAtom, (o) => o.filter((v) => v.id !== peerId));
+    if (streamingData.id === peerId) {
+      resetVideo();
+    }
+  }
 }
