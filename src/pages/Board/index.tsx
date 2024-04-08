@@ -38,8 +38,8 @@ const Board: React.FC = () => {
   return (
     <div
       style={{
-        width: '100vw',
-        height: 'calc(100vh - 50px)',
+        width: '100dvw',
+        height: 'calc(100dvh - 50px)',
         boxSizing: 'border-box',
         overflow: 'hidden',
         position: 'relative',
@@ -47,7 +47,7 @@ const Board: React.FC = () => {
     >
       <canvas
         ref={canvasRef}
-        style={{ width: '100vw', height: 'calc(100vh - 50px)' }}
+        style={{ width: '100dvw', height: 'calc(100dvh - 50px)' }}
       />
       <ToolBar />
     </div>

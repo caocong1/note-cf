@@ -31,7 +31,7 @@ const Layout: React.FC = () => {
 
   return (
     <Spin spinning={pageLoading}>
-      <div style={{ width: '100vw', height: '100vh' }}>
+      <div style={{ width: '100dvw', height: '100dvh' }}>
         <div style={{ display: component === 'note' ? 'block' : 'none' }}>
           <Note />
         </div>
@@ -46,7 +46,7 @@ const Layout: React.FC = () => {
         </div>
         <div
           style={{
-            width: '100vw',
+            width: '100dvw',
             height: 50,
             display: 'flex',
             justifyContent: 'space-between',

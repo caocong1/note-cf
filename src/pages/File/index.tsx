@@ -14,8 +14,8 @@ const File: React.FC = () => {
   return (
     <div
       style={{
-        width: '100vw',
-        height: 'calc(100vh - 50px)',
+        width: '100dvw',
+        height: 'calc(100dvh - 50px)',
         boxSizing: 'border-box',
         overflow: 'auto',
         position: 'relative',

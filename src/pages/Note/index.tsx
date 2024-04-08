@@ -7,8 +7,8 @@ const Note: React.FC = () => {
       id="content"
       contentEditable
       style={{
-        width: '100vw',
-        height: 'calc(100vh - 50px)',
+        width: '100dvw',
+        height: 'calc(100dvh - 50px)',
         boxSizing: 'border-box',
         padding: 8,
         overflow: 'auto',

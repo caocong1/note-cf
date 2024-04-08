@@ -145,7 +145,7 @@ export function callToPeers(stream: any) {
 
 export function initConn(conn: DataConnection) {
   conn.on('open', () => {
-    // console.log("connect open", conn.peer);
+    console.log('connect open', conn.peer)
     store.set(peersAtom, (old) =>
       old.map((peer: PeerConnection) => {
         if (peer.peerId === conn.peer) {
