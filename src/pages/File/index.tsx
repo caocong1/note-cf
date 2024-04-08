@@ -1,36 +1,38 @@
-import { Button, Progress, Table, notification } from "antd";
-import { useAtom, useAtomValue } from "jotai";
-import { filesAtom, myNameAtom, peersAtom } from "./atom";
-import { myPeerId, sendDataToPeers } from "./peer";
-import { createFileWritable, getFilesRecursively } from "./PeerConnection";
+import { Button, Progress, Table, notification } from 'antd'
+import { useAtom, useAtomValue } from 'jotai'
+import { myNameAtom, myPeerIdAtom, peersAtom } from '@/atom'
+import { sendDataToPeers } from '@/utils/peer'
+import { filesAtom } from './atom'
+import { getFilesRecursively, createFileWritable } from './util'
 
 const File: React.FC = () => {
-  const [files, setFiles] = useAtom(filesAtom);
-  const myName = useAtomValue(myNameAtom);
-  const peers = useAtomValue(peersAtom);
+  const [files, setFiles] = useAtom(filesAtom)
+  const myName = useAtomValue(myNameAtom)
+  const peers = useAtomValue(peersAtom)
+  const myPeerId = useAtomValue(myPeerIdAtom)
 
   return (
     <div
       style={{
-        width: "100vw",
-        height: "calc(100vh - 50px)",
-        boxSizing: "border-box",
-        overflow: "auto",
-        position: "relative",
+        width: '100vw',
+        height: 'calc(100vh - 50px)',
+        boxSizing: 'border-box',
+        overflow: 'auto',
+        position: 'relative',
       }}
     >
       <div
         style={{
-          display: "flex",
+          display: 'flex',
           padding: 8,
           gap: 8,
-          justifyContent: "flex-end",
+          justifyContent: 'flex-end',
         }}
       >
         <Button
           type="primary"
           onClick={async () => {
-            const [fileHandle] = await (window as any).showOpenFilePicker();
+            const [fileHandle] = await (window as any).showOpenFilePicker()
             const file = {
               id: crypto.randomUUID(),
               name: fileHandle.name,
@@ -38,12 +40,12 @@ const File: React.FC = () => {
               fileHandle,
               user: myName,
               peerId: myPeerId,
-            };
-            setFiles((o) => [...o, file]);
+            }
+            setFiles((o) => [...o, file])
             sendDataToPeers({
-              type: "file-add",
+              type: 'file-add',
               data: { ...file, fileHandle: undefined },
-            });
+            })
           }}
         >
           文件
@@ -51,18 +53,18 @@ const File: React.FC = () => {
         <Button
           type="primary"
           onClick={async () => {
-            const dirHandle = await (window as any).showDirectoryPicker();
-            const fileHandles = await getFilesRecursively(dirHandle);
+            const dirHandle = await (window as any).showDirectoryPicker()
+            const fileHandles = await getFilesRecursively(dirHandle)
             if (fileHandles.length) {
-              const subFiles = [];
+              const subFiles = []
               for await (const fileHandle of fileHandles) {
-                const relativePaths = await dirHandle.resolve(fileHandle);
+                const relativePaths = await dirHandle.resolve(fileHandle)
                 subFiles.push({
                   id: crypto.randomUUID(),
                   name: fileHandle.name,
                   fileHandle,
                   relativePaths: relativePaths.slice(0, -1),
-                });
+                })
               }
               const file = {
                 id: crypto.randomUUID(),
@@ -72,10 +74,10 @@ const File: React.FC = () => {
                 subFiles,
                 user: myName,
                 peerId: myPeerId,
-              };
-              setFiles((o) => [...o, file]);
+              }
+              setFiles((o) => [...o, file])
               sendDataToPeers({
-                type: "file-add",
+                type: 'file-add',
                 data: {
                   ...file,
                   dirHandle: undefined,
@@ -84,9 +86,9 @@ const File: React.FC = () => {
                     fileHandle: undefined,
                   })),
                 },
-              });
+              })
             } else {
-              notification.error({ message: "该文件夹下没有文件" });
+              notification.error({ message: '该文件夹下没有文件' })
             }
           }}
         >
@@ -97,23 +99,23 @@ const File: React.FC = () => {
         rowKey="id"
         columns={[
           {
-            title: "Name",
-            dataIndex: "name",
+            title: 'Name',
+            dataIndex: 'name',
           },
           {
-            title: "Type",
-            dataIndex: "type",
+            title: 'Type',
+            dataIndex: 'type',
           },
           //   {
           //     title: "Size",
           //     dataIndex: "size",
           //   },
           {
-            title: "User",
-            dataIndex: "user",
+            title: 'User',
+            dataIndex: 'user',
           },
           {
-            title: "Operate",
+            title: 'Operate',
             render: (record) => (
               <div>
                 {record.peerId === myPeerId && (
@@ -121,11 +123,11 @@ const File: React.FC = () => {
                     danger
                     type="link"
                     onClick={async () => {
-                      setFiles((o) => o.filter((i) => i.id !== record.id));
+                      setFiles((o) => o.filter((i) => i.id !== record.id))
                       sendDataToPeers({
-                        type: "file-remove",
+                        type: 'file-remove',
                         data: record.id,
-                      });
+                      })
                     }}
                   >
                     移除
@@ -133,36 +135,36 @@ const File: React.FC = () => {
                 )}
                 {record.peerId !== myPeerId &&
                   !record.downloading &&
-                  record.type === "file" && (
+                  record.type === 'file' && (
                     <Button
                       type="link"
                       onClick={async () => {
                         const peer = peers.find(
                           (p) => p.peerId === record.peerId,
-                        );
+                        )
                         if (peer) {
                           const fileHandle = await (
                             window as any
-                          ).showSaveFilePicker({ suggestedName: record.name });
-                          const writable = await fileHandle.createWritable();
+                          ).showSaveFilePicker({ suggestedName: record.name })
+                          const writable = await fileHandle.createWritable()
                           setFiles((o) =>
                             o.map((f) => {
                               if (f.id === record.id) {
-                                return { ...f, writable };
+                                return { ...f, writable }
                               }
-                              return f;
+                              return f
                             }),
-                          );
+                          )
                           peer.conn?.send({
-                            type: "request-download",
+                            type: 'request-download',
                             data: record.id,
-                          });
+                          })
                         } else {
-                          notification.error({ message: "该文件发送人已离线" });
+                          notification.error({ message: '该文件发送人已离线' })
                           sendDataToPeers({
-                            type: "file-remove",
+                            type: 'file-remove',
                             data: record.id,
-                          });
+                          })
                         }
                       }}
                     >
@@ -171,24 +173,24 @@ const File: React.FC = () => {
                   )}
                 {record.peerId !== myPeerId &&
                   !record.downloading &&
-                  record.type === "directory" && (
+                  record.type === 'directory' && (
                     <Button
                       type="link"
                       onClick={async () => {
                         const peer = peers.find(
                           (p) => p.peerId === record.peerId,
-                        );
+                        )
                         if (peer) {
                           const dirHandle = await (
                             window as any
-                          ).showDirectoryPicker();
+                          ).showDirectoryPicker()
                           for await (const subFile of record.subFiles) {
                             const writable = await createFileWritable(
                               dirHandle,
                               subFile.name,
                               subFile.relativePaths,
-                            );
-                            subFile.writable = writable;
+                            )
+                            subFile.writable = writable
                           }
                           setFiles((o) =>
                             o.map((f) => {
@@ -197,28 +199,28 @@ const File: React.FC = () => {
                                   ...f,
                                   dirHandle,
                                   subFiles: record.subFiles,
-                                };
+                                }
                               }
-                              return f;
+                              return f
                             }),
-                          );
+                          )
                           peer.conn?.send({
-                            type: "request-download",
+                            type: 'request-download',
                             data: record.id,
-                          });
+                          })
                         } else {
-                          notification.error({ message: "该文件发送人已离线" });
+                          notification.error({ message: '该文件发送人已离线' })
                           sendDataToPeers({
-                            type: "file-remove",
+                            type: 'file-remove',
                             data: record.id,
-                          });
+                          })
                         }
                       }}
                     >
                       下载
                     </Button>
                   )}
-                {record.downloading && record.type === "file" && (
+                {record.downloading && record.type === 'file' && (
                   <Progress
                     percent={Math.floor(
                       ((record.downloading.end || 0) * 100) /
@@ -226,19 +228,19 @@ const File: React.FC = () => {
                     )}
                     status={
                       record.downloading.end === record.downloading.totalSize
-                        ? "success"
-                        : "active"
+                        ? 'success'
+                        : 'active'
                     }
                   />
                 )}
-                {record.downloading && record.type === "directory" && (
+                {record.downloading && record.type === 'directory' && (
                   <div>
                     {record.subFiles.map((subFile: any) => (
                       <div key={subFile.id}>
                         <div>
                           {subFile.relativePaths.length
-                            ? "/" + subFile.relativePaths.join("/")
-                            : ""}
+                            ? '/' + subFile.relativePaths.join('/')
+                            : ''}
                           /{subFile.name}
                         </div>
                         <Progress
@@ -247,8 +249,8 @@ const File: React.FC = () => {
                           )}
                           status={
                             subFile.end === subFile.totalSize
-                              ? "success"
-                              : "active"
+                              ? 'success'
+                              : 'active'
                           }
                         />
                       </div>
@@ -262,7 +264,7 @@ const File: React.FC = () => {
         dataSource={files}
       />
     </div>
-  );
-};
+  )
+}
 
-export default File;
+export default File
