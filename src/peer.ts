@@ -13,7 +13,7 @@ import PeerConnection, {
   jsonAddToBoard,
   noteChange,
 } from "./PeerConnection";
-import { notification } from "antd";
+import { Modal, notification } from "antd";
 import request from "./request";
 import { FabricImage, Canvas } from "fabric";
 
@@ -71,7 +71,7 @@ export function initPeer() {
     host,
     port,
     secure,
-    path:  path + "peerjs",
+    path: path + "peerjs",
   });
 
   peer.on("open", function (id) {
@@ -128,7 +128,10 @@ export function initPeer() {
           return [...o];
         } else {
           const peer = peers.find((p) => p.peerId === call.peer);
-          return [...o, { id: call.peer, name: peer?.name, stream: remoteStream }];
+          return [
+            ...o,
+            { id: call.peer, name: peer?.name, stream: remoteStream },
+          ];
         }
       });
       // Modal.destroyAll();
@@ -149,7 +152,24 @@ export function initPeer() {
 
   peer.on("error", function (e) {
     console.error(e);
-    notification.error({ message: "Peer连接失败请重试" });
+    if (e.message.includes("is taken")) {
+      // notification.error({ message: "同一浏览器只能开一个Note窗口" });
+      Modal.confirm({
+        title: "提示",
+        content: "同一浏览器只能开一个Note窗口",
+        onOk() {
+          // window.open(location.href, "Note");
+          window.close();
+        },
+        cancelText: "",
+        onCancel() {
+          window.close();
+        },
+        closable: false,
+      });
+    } else {
+      notification.error({ message: "Peer连接失败请重试，msg: " + e.message });
+    }
   });
 }
 
