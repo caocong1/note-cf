@@ -83,6 +83,8 @@ const server = https
 const peerServer = ExpressPeerServer(server, {
   debug: true,
   path: '/',
+  sslkey: fs.readFileSync('C:\\love2c.cc_nginx\\love2c.cc.key'),
+  sslcert: fs.readFileSync('C:\\love2c.cc_nginx\\love2c.cc_bundle.crt'),
 })
 
 // peerServer.on('connection', (client) => {

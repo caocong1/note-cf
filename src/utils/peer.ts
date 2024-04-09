@@ -32,6 +32,12 @@ export function initPeer() {
     port: import.meta.env.VITE_PORT,
     secure: import.meta.env.VITE_SECURE === 'true',
     path: import.meta.env.VITE_PATH + 'peerjs',
+    config: {
+      iceServers: [
+        { urls: 'stun:stun.cloudflare.com:3478	' },
+        { urls: 'stun:stun.l.google.com:19302' },
+      ],
+    },
   })
 
   peer.on('open', function (id) {
