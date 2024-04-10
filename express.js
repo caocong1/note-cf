@@ -13,6 +13,8 @@ const app = express()
 app.use(express.json({ limit: '100mb' }))
 app.use(cors())
 
+app.use(express.static('dist'))
+
 app.post('/get-peers', (req, res) => {
   // console.log(req.body);
   res.json(peers[req.body.pathname] || [])
