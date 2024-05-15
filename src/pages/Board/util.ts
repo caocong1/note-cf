@@ -65,19 +65,18 @@ export function initBoardCanvas(canvasRef: React.RefObject<HTMLCanvasElement>) {
     )
   })
   // canvas拖拽
-  let isMiddleMouseDown = false
-  canvas.on('mouse:up', (e: any) => {
+  let mouseDownButton: number | null = null
+  canvas.on('mouse:up', () => {
     // console.log("mouse:up", e);
-    if (e.e.button === 1) {
-      isMiddleMouseDown = false
-    }
+    mouseDownButton = null
   })
   canvas.on('mouse:down', (e: any) => {
-    // console.log("mouse:down", e);
-    if (e.e.button === 1) {
-      isMiddleMouseDown = true
-    }
-    if (e.e.button === 2) {
+    // console.log('mouse:down', e.e.button)
+    // if (e.e.button === 1) {
+    //   isMiddleMouseDown = true
+    // }
+    mouseDownButton = e.e.button
+    if (e.e.button === 2 && e.target) {
       // console.log(e.target, canvas.getObjects());
       canvas.remove(e.target)
       sendDataToPeers({ type: 'board-object-remove', data: e.target.id })
@@ -87,7 +86,7 @@ export function initBoardCanvas(canvasRef: React.RefObject<HTMLCanvasElement>) {
   canvas.on('mouse:move', (e) => {
     // console.log("mouse:move", e);
     const event: any = e?.e
-    if (isMiddleMouseDown && event) {
+    if (mouseDownButton && event) {
       const point = new Point(event.movementX, event.movementY)
       canvas.relativePan(point)
     }

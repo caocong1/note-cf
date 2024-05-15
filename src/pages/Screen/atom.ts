@@ -12,3 +12,7 @@ export const streamingDataAtom = atom<StreamData>({
 })
 
 export const remoteStreamDataAtom = atom<StreamData[]>([])
+
+export const isPenModeAtom = atom(false)
+
+export const showAlertAtom = atom(false)

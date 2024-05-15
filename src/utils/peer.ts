@@ -10,7 +10,13 @@ import {
   jsonAddToBoard,
   removeBoardObject,
 } from '@/pages/Board/util'
-import { resetVideo, stopScreen } from '@/pages/Screen/util'
+import {
+  clearScreenBoard,
+  removeScreenBoardObject,
+  resetVideo,
+  screenJsonAddToBoard,
+  stopScreen,
+} from '@/pages/Screen/util'
 import { remotePeerNameChanged } from '@/pages/Layout/util'
 import {
   addFile,
@@ -204,6 +210,15 @@ export function initConn(conn: DataConnection) {
           break
         case 'screen-stop':
           stopScreen(data)
+          break
+        case 'screen-board-object-add':
+          screenJsonAddToBoard([data])
+          break
+        case 'screen-board-clear':
+          clearScreenBoard()
+          break
+        case 'screen-board-object-remove':
+          removeScreenBoardObject(data)
           break
       }
     })

@@ -1,15 +1,34 @@
 import { myPeerIdAtom, store } from '@/atom'
-import { FabricImage, Canvas, Point, util } from 'fabric'
-import { StreamData, remoteStreamDataAtom, streamingDataAtom } from './atom'
+import { FabricImage, Canvas, Point, util, PencilBrush } from 'fabric'
+import {
+  StreamData,
+  remoteStreamDataAtom,
+  showAlertAtom,
+  streamingDataAtom,
+} from './atom'
 import { notification } from 'antd'
 import { sendDataToPeers } from '@/utils/peer'
 
 let video: HTMLVideoElement
 // export let canvasVideo: FabricImage
-let screenCanvas: Canvas
+export let screenCanvas: Canvas
 let checkVideoSizeInterval: any
+export let screenPencilBrush: PencilBrush
 
 // const checkVideoSizeDebounce = debounce(checkVideoSize, 200)
+
+export function screenJsonAddToBoard(json: any) {
+  util.enlivenObjects(json).then((objects) => {
+    objects.forEach(function (o: any) {
+      screenCanvas.add(o)
+    })
+  })
+}
+
+export function removeScreenBoardObject(data: any) {
+  const removeObject = screenCanvas.getObjects().find((o: any) => o.id === data)
+  removeObject && screenCanvas.remove(removeObject)
+}
 
 const initScreenCanvas = () => {
   if (screenCanvas) {
@@ -19,7 +38,28 @@ const initScreenCanvas = () => {
   const canvasEl = document.getElementById('screen-canvas') as HTMLCanvasElement
   canvasEl.width = window.innerWidth
   canvasEl.height = window.innerHeight - 50
-  screenCanvas = new Canvas(canvasEl)
+  screenCanvas = new Canvas(canvasEl, {
+    isDrawingMode: true,
+    stopContextMenu: true,
+    fireMiddleClick: true,
+    fireRightClick: true,
+  })
+  screenPencilBrush = new PencilBrush(screenCanvas)
+  screenPencilBrush.color = 'red'
+  screenPencilBrush.width = 10
+  screenCanvas.freeDrawingBrush = screenPencilBrush
+
+  screenCanvas.on('path:created', function (e: any) {
+    // console.log("path:created", e);
+    const newPath = e.path
+    const id = crypto.randomUUID()
+    e.path.set({ id })
+
+    const json = newPath.toJSON()
+    sendDataToPeers({ type: 'screen-board-object-add', data: { ...json, id } })
+    // saveScreenBoard()
+  })
+
   screenCanvas.on('mouse:wheel', (opt) => {
     const delta = opt.e.deltaY // 滚轮，向上滚一下是 -100，向下滚一下是 100
     let zoom = screenCanvas.getZoom() // 获取画布当前缩放值
@@ -35,19 +75,30 @@ const initScreenCanvas = () => {
       zoom, // 传入修改后的缩放级别
     )
   })
-  let mouseDown = false
+  let mouseDownButton: number | null = null
   screenCanvas.on('mouse:up', () => {
     // console.log("mouse:up", e);
-    mouseDown = false
+    // mouseDown = false
+    mouseDownButton = null
   })
-  screenCanvas.on('mouse:down', () => {
+  screenCanvas.on('mouse:down', (e: any) => {
     // console.log("mouse:down", e);
-    mouseDown = true
+    // const isPenMode = store.get(isPenModeAtom)
+    // if (!isPenMode) {
+    //   mouseDown = true
+    // }
+    mouseDownButton = e.e.button
+    if (e.e.button === 2 && e.target && e.target.id) {
+      // console.log(e.target, canvas.getObjects());
+      screenCanvas.remove(e.target)
+      sendDataToPeers({ type: 'screen-board-object-remove', data: e.target.id })
+      // saveScreenBoard()
+    }
   })
   screenCanvas.on('mouse:move', (e) => {
     // console.log("mouse:move", e);
     const event: any = e?.e
-    if (mouseDown && event) {
+    if (mouseDownButton && event) {
       const point = new Point(event.movementX, event.movementY)
       screenCanvas.relativePan(point)
     }
@@ -120,6 +171,9 @@ export function playVideo(data: StreamData) {
   // canvasEl.width = window.innerWidth
   // canvasEl.height = window.innerHeight - 50
   // screenCanvas = new Canvas(canvasEl)
+  if (!localStorage.notShowAlert) {
+    store.set(showAlertAtom, true)
+  }
   initScreenCanvas()
   video = document.createElement('video')
   // document.body.appendChild(video)
@@ -209,7 +263,7 @@ function checkVideoSize() {
       if (size.width === video.width && size.height === video.height) {
         return
       }
-      console.log('video size change')
+      // console.log('video size change')
       video.width = size.width
       video.height = size.height
       const canvasVideo = new FabricImage(video, {
@@ -231,4 +285,19 @@ function debounce(func: any, wait: number) {
     clearTimeout(timeout)
     timeout = setTimeout(() => func(...args), wait)
   }
+}
+
+// export function saveScreenBoard() {
+//   const objects = screenCanvas.getObjects()
+//   request('screen-board-change', {
+//     pathname: roomName,
+//     boardPaths: objects.map((o: any) => ({ ...o.toJSON(), id: o.id })),
+//   })
+// }
+
+export function clearScreenBoard() {
+  // screenCanvas.clear()
+  screenCanvas.remove(...screenCanvas.getObjects().slice(1))
+
+  // saveScreenBoard()
 }

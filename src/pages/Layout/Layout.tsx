@@ -1,5 +1,5 @@
 import React, { useLayoutEffect } from 'react'
-import { useAtom, useAtomValue } from 'jotai'
+import { useAtom, useAtomValue, useSetAtom } from 'jotai'
 import { myPeerIdAtom, peersAtom } from '../../atom'
 import { Badge, Dropdown, Radio, Spin, Tag } from 'antd'
 import { initPeer, roomName } from '../../utils/peer'
@@ -12,6 +12,7 @@ import File from '../File'
 import RemoteStreamBadge from '../Screen/components/RemoteStreamBadge'
 import ScreenShareButton from '../Screen/components/ScreenShareButton'
 import { pageLoadingAtom, componentAtom } from './atom'
+import { showAlertAtom } from '../Screen/atom'
 
 const badgeStatus: Record<string, PresetStatusColorType> = {
   connected: 'success',
@@ -24,6 +25,7 @@ const Layout: React.FC = () => {
   const peers = useAtomValue(peersAtom)
   const [component, setComponent] = useAtom(componentAtom)
   const myPeerId = useAtomValue(myPeerIdAtom)
+  const setShowAlert = useSetAtom(showAlertAtom)
 
   useLayoutEffect(() => {
     initPeer()
@@ -105,7 +107,14 @@ const Layout: React.FC = () => {
             <Radio.Group
               size="small"
               value={component}
-              onChange={(e) => setComponent(e.target.value)}
+              onChange={(e) => {
+                setComponent(e.target.value)
+                if (e.target.value === 'board') {
+                  setShowAlert(true)
+                } else {
+                  setShowAlert(false)
+                }
+              }}
             >
               <Radio.Button value="note">Note</Radio.Button>
               <Radio.Button value="file">File</Radio.Button>

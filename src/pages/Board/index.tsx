@@ -1,9 +1,14 @@
 import React, { useEffect, useRef } from 'react'
 import ToolBar from './components/ToolBar'
-import { initBoardCanvas, canvas } from './util'
+import { initBoardCanvas, canvas, pencilBrush } from './util'
+import { sendDataToPeers } from '@/utils/peer'
+import BoardHelpAlert from '../Screen/components/BorderHelpAlert'
+import { showAlertAtom } from '../Screen/atom'
+import { useAtomValue } from 'jotai'
 
 const Board: React.FC = () => {
   const canvasRef = useRef<HTMLCanvasElement>(null)
+  const showAlert = useAtomValue(showAlertAtom)
 
   useEffect(() => {
     canvasRef.current!.width = window.innerWidth
@@ -49,7 +54,14 @@ const Board: React.FC = () => {
         ref={canvasRef}
         style={{ width: '100dvw', height: 'calc(100dvh - 50px)' }}
       />
-      <ToolBar />
+      <ToolBar
+        canvasClear={() => {
+          canvas.clear()
+          sendDataToPeers({ type: 'board-clear', data: {} })
+        }}
+        pencilBrush={pencilBrush}
+      />
+      {!localStorage.notShowAlert && showAlert && <BoardHelpAlert />}
     </div>
   )
 }

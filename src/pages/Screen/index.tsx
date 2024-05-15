@@ -1,12 +1,17 @@
 import { Button } from 'antd'
 import { useAtomValue } from 'jotai'
 import { PlayCircleTwoTone, RedoOutlined } from '@ant-design/icons'
-import { streamingDataAtom, remoteStreamDataAtom } from './atom'
-import { playVideo, restoreSize } from './util'
+import { streamingDataAtom, remoteStreamDataAtom, showAlertAtom } from './atom'
+import { playVideo, restoreSize, screenCanvas, screenPencilBrush } from './util'
+import ToolBar from '../Board/components/ToolBar'
+import { sendDataToPeers } from '@/utils/peer'
+import BoardHelpAlert from './components/BorderHelpAlert'
 
 const Screen: React.FC = () => {
   const streamingData = useAtomValue(streamingDataAtom)
   const remoteStreamData = useAtomValue(remoteStreamDataAtom)
+  const showAlert = useAtomValue(showAlertAtom)
+  // const [isPenMode, setIsPenMode] = useAtom(isPenModeAtom)
 
   // useEffect(() => {
   //   initScreenCanvas()
@@ -84,14 +89,26 @@ const Screen: React.FC = () => {
         height: 'calc(100dvh - 50px)',
         boxSizing: 'border-box',
         overflow: 'auto',
+        position: 'relative',
       }}
     >
       <canvas id="screen-canvas" />
+      {streamingData.id && (
+        <ToolBar
+          canvasClear={() => {
+            // screenCanvas.clear()
+            // console.log(screenCanvas.getObjects())
+            screenCanvas.remove(...screenCanvas.getObjects().slice(1))
+            sendDataToPeers({ type: 'screen-board-clear', data: {} })
+          }}
+          pencilBrush={screenPencilBrush}
+        />
+      )}
       <div
         style={{
           position: 'absolute',
           bottom: 120,
-          right: 20,
+          right: 16,
           display: 'flex',
           flexDirection: 'column',
           gap: 8,
@@ -99,14 +116,11 @@ const Screen: React.FC = () => {
       >
         {streamingData.id ? (
           <Button
-            size={'small'}
             icon={<RedoOutlined />}
             onClick={() => {
               restoreSize()
             }}
-          >
-            恢复
-          </Button>
+          />
         ) : (
           remoteStreamData.map((v) => (
             <Button
@@ -121,6 +135,7 @@ const Screen: React.FC = () => {
           ))
         )}
       </div>
+      {showAlert && <BoardHelpAlert />}
     </div>
   )
 }
