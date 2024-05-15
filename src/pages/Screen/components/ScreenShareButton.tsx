@@ -18,12 +18,6 @@ const ScreenShareButton: React.FC = () => {
         component={StopSvg}
         style={{ color: 'red', marginLeft: 8 }}
         onClick={() => {
-          if (streamingData.id === myPeerId) {
-            sendDataToPeers({
-              type: 'screen-stop',
-              data: { peerId: myPeerId },
-            })
-          }
           resetVideo()
         }}
       />

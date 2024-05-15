@@ -35,7 +35,7 @@ export function initPeer() {
     config: {
       iceServers: [
         { urls: 'stun:freestun.net:5350' },
-        { urls: 'stun:stun.cloudflare.com:3478	' },
+        { urls: 'stun:stun.cloudflare.com:3478' },
         { urls: 'stun:stun.l.google.com:19302' },
       ],
     },
