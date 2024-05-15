@@ -30,6 +30,12 @@ const ScreenShareButton: React.FC = () => {
         onClick={() => {
           navigator.mediaDevices
             .getDisplayMedia({
+              // video: {
+              //   width: { ideal: window.screen.width * window.devicePixelRatio },
+              //   height: {
+              //     ideal: window.screen.height * window.devicePixelRatio,
+              //   },
+              // },
               video: true,
               audio: false,
             })

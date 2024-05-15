@@ -7,6 +7,9 @@ import { sendDataToPeers } from '@/utils/peer'
 let video: HTMLVideoElement
 // export let canvasVideo: FabricImage
 let screenCanvas: Canvas
+let checkVideoSizeInterval: any
+
+// const checkVideoSizeDebounce = debounce(checkVideoSize, 200)
 
 const initScreenCanvas = () => {
   if (screenCanvas) {
@@ -69,7 +72,9 @@ const initScreenCanvas = () => {
     screenCanvas.renderAll()
   }
 
-  window.addEventListener('resize', resizeCanvas)
+  const resize = debounce(resizeCanvas, 200)
+
+  window.addEventListener('resize', resize)
 
   util.requestAnimFrame(function render() {
     screenCanvas.renderAll()
@@ -88,6 +93,9 @@ export const resetVideo = () => {
   //   height: video.height,
   //   selectable: false,
   // })
+  if (checkVideoSizeInterval) {
+    clearInterval(checkVideoSizeInterval)
+  }
   notification.warning({ message: '屏幕共享结束' })
   const streamingData = store.get(streamingDataAtom)
   const myPeerId = store.get(myPeerIdAtom)
@@ -114,8 +122,10 @@ export function playVideo(data: StreamData) {
   // screenCanvas = new Canvas(canvasEl)
   initScreenCanvas()
   video = document.createElement('video')
+  // document.body.appendChild(video)
   video.srcObject = data.stream
   video.onloadedmetadata = () => {
+    // console.log(video.videoWidth, video.videoHeight, window.devicePixelRatio)
     const myPeerId = store.get(myPeerIdAtom)
     if (data.id === myPeerId) {
       video.width = video.videoWidth * window.devicePixelRatio
@@ -131,14 +141,21 @@ export function playVideo(data: StreamData) {
       height: video.height,
       selectable: false,
     })
-    const widthRadio = window.innerWidth / video.width
-    const heightRadio = (window.innerHeight - 50) / video.height
+    let widthRadio = window.innerWidth / video.width
+    let heightRadio = (window.innerHeight - 50) / video.height
+    if (data.id === myPeerId) {
+      widthRadio = (window.innerWidth * window.devicePixelRatio) / video.width
+      heightRadio =
+        ((window.innerHeight - 50) * window.devicePixelRatio) / video.height
+    }
     const zoom = Math.min(widthRadio, heightRadio)
+    // console.log('zoom', zoom, video.width, window.innerWidth)
     const point = new Point(0, 0)
     screenCanvas.zoomToPoint(point, zoom)
     screenCanvas.add(canvasVideo)
     video.play()
     store.set(streamingDataAtom, data)
+    checkVideoSizeInterval = setInterval(checkVideoSize, 1000)
   }
   const tracks = data.stream?.getTracks()
   if (tracks?.length) {
@@ -170,17 +187,48 @@ export function stopScreen(data: any) {
   }
 }
 
-// async function getStreamDimensions(stream: MediaStream) {
-//   // const stream = await navigator.mediaDevices.getDisplayMedia({ video: true })
-//   const video = document.createElement('video')
-//   video.style.display = 'none'
-//   document.body.appendChild(video)
-//   video.srcObject = stream
+async function getStreamDimensions(stream: MediaStream) {
+  // const stream = await navigator.mediaDevices.getDisplayMedia({ video: true })
+  const video = document.createElement('video')
+  video.style.display = 'none'
+  document.body.appendChild(video)
+  video.srcObject = stream
 
-//   return new Promise((resolve) => {
-//     video.onloadedmetadata = () => {
-//       resolve({ width: video.videoWidth, height: video.videoHeight })
-//       document.body.removeChild(video)
-//     }
-//   })
-// }
+  return new Promise((resolve) => {
+    video.onloadedmetadata = () => {
+      resolve({ width: video.videoWidth, height: video.videoHeight })
+      document.body.removeChild(video)
+    }
+  })
+}
+
+function checkVideoSize() {
+  const streamingData = store.get(streamingDataAtom)
+  if (streamingData.stream) {
+    getStreamDimensions(streamingData.stream).then((size: any) => {
+      if (size.width === video.width && size.height === video.height) {
+        return
+      }
+      console.log('video size change')
+      video.width = size.width
+      video.height = size.height
+      const canvasVideo = new FabricImage(video, {
+        left: 0,
+        top: 0,
+        width: video.width,
+        height: video.height,
+        selectable: false,
+      })
+      screenCanvas.remove(...screenCanvas.getObjects())
+      screenCanvas.add(canvasVideo)
+    })
+  }
+}
+
+function debounce(func: any, wait: number) {
+  let timeout: any
+  return function (...args: any) {
+    clearTimeout(timeout)
+    timeout = setTimeout(() => func(...args), wait)
+  }
+}
