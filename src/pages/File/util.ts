@@ -84,6 +84,39 @@ export async function requestDownload(data: any) {
   }
 }
 
+export async function requestDownloadLegacy(data: any) {
+  const { conn, fileId } = data
+  const files = store.get(filesAtom)
+  const fileData = files.find((f) => f.id === fileId)
+  if (fileData.type === 'file' && fileData.file) {
+    const { file } = fileData
+    conn.send({
+      type: 'send-file-start',
+      data: { fileId, size: file.size },
+    })
+    const buffer = await file.arrayBuffer()
+    const size = buffer.byteLength
+    let start = 0
+    let end = size > chunkSize ? chunkSize : size
+    let sendBuffer = buffer.slice(start, end)
+    while (sendBuffer.byteLength > 0) {
+      conn.send({
+        type: 'send-file',
+        data: {
+          fileId,
+          buffer: sendBuffer,
+          // start,
+          end,
+          // size,
+        },
+      })
+      start = end
+      end = size > start + chunkSize ? start + chunkSize : size
+      sendBuffer = buffer.slice(start, end)
+    }
+  }
+}
+
 export async function startReceiveFile(data: any) {
   const { fileId, size } = data
   const filesData = store.get(filesAtom)
@@ -169,6 +202,34 @@ export function downloadFile(data: any) {
         }),
       )
     })
+  } else if (fileData?.type === 'file') {
+    const fileBuffer = new Uint8Array([
+      ...(fileData.fileBuffer ?? []),
+      ...buffer,
+    ])
+    if (fileData.downloading.totalSize === end) {
+      const file = new Blob([fileBuffer], { type: fileData.contentType })
+      const url = URL.createObjectURL(file)
+      const a = document.createElement('a')
+      a.href = url
+      a.download = fileData.name
+      a.click()
+      URL.revokeObjectURL(url)
+    }
+    store.set(filesAtom, (o) =>
+      o.map((f) => {
+        if (f.id === fileId) {
+          return {
+            ...f,
+            fileBuffer,
+            downloading: {
+              ...f.downloading,
+              end,
+            },
+          }
+        }
+      }),
+    )
   } else if (fileData?.type === 'directory') {
     const { downloadingId } = data
     const subFile = fileData.subFiles.find((f: any) => f.id === downloadingId)

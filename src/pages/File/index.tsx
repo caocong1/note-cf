@@ -1,4 +1,4 @@
-import { Button, Progress, Table, notification } from 'antd'
+import { Button, Progress, Table, Upload, notification } from 'antd'
 import { useAtom, useAtomValue } from 'jotai'
 import { myNameAtom, myPeerIdAtom, peersAtom } from '@/atom'
 import { sendDataToPeers } from '@/utils/peer'
@@ -50,6 +50,27 @@ const File: React.FC = () => {
         >
           文件
         </Button>
+        <Upload
+          customRequest={({ file, filename }: any) => {
+            const fileData = {
+              id: crypto.randomUUID(),
+              name: filename,
+              type: 'file',
+              file,
+              contentType: file.type,
+              user: myName,
+              peerId: myPeerId,
+            }
+            setFiles((o) => [...o, fileData])
+            sendDataToPeers({
+              type: 'file-add',
+              data: { ...fileData, file: undefined },
+            })
+          }}
+          showUploadList={false}
+        >
+          <Button type="primary">文件o</Button>
+        </Upload>
         <Button
           type="primary"
           onClick={async () => {
@@ -143,24 +164,33 @@ const File: React.FC = () => {
                           (p) => p.peerId === record.peerId,
                         )
                         if (peer) {
-                          const fileHandle = await (
-                            window as any
-                          ).showSaveFilePicker({ suggestedName: record.name })
-                          const writable = await fileHandle.createWritable()
-                          setFiles((o) =>
-                            o.map((f) => {
-                              if (f.id === record.id) {
-                                return { ...f, writable }
-                              }
-                              return f
-                            }),
-                          )
-                          peer.conn?.send({
-                            type: 'request-download',
-                            data: record.id,
-                          })
+                          if ((window as any).showSaveFilePicker) {
+                            const fileHandle = await (
+                              window as any
+                            ).showSaveFilePicker({ suggestedName: record.name })
+                            const writable = await fileHandle.createWritable()
+                            setFiles((o) =>
+                              o.map((f) => {
+                                if (f.id === record.id) {
+                                  return { ...f, writable }
+                                }
+                                return f
+                              }),
+                            )
+                            peer.conn?.send({
+                              type: 'request-download',
+                              data: record.id,
+                            })
+                          } else {
+                            peer.conn?.send({
+                              type: 'request-download-legacy',
+                              data: record.id,
+                            })
+                          }
                         } else {
-                          notification.error({ message: '该文件发送人已离线' })
+                          notification.error({
+                            message: '该文件发送人已离线',
+                          })
                           sendDataToPeers({
                             type: 'file-remove',
                             data: record.id,
@@ -171,7 +201,7 @@ const File: React.FC = () => {
                       下载
                     </Button>
                   )}
-                {record.peerId !== myPeerId &&
+                {/* {record.peerId !== myPeerId &&
                   !record.downloading &&
                   record.type === 'directory' && (
                     <Button
@@ -219,7 +249,7 @@ const File: React.FC = () => {
                     >
                       下载
                     </Button>
-                  )}
+                  )} */}
                 {record.downloading && record.type === 'file' && (
                   <Progress
                     percent={Math.floor(
