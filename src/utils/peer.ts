@@ -38,7 +38,7 @@ export function initPeer() {
     host: import.meta.env.VITE_HOST,
     port: import.meta.env.VITE_PORT,
     secure: import.meta.env.VITE_SECURE === 'true',
-    path: import.meta.env.VITE_PATH + 'peerjs',
+    path: import.meta.env.VITE_PEER_PATH + 'peerjs',
     config: {
       iceServers: [
         { urls: 'stun:freestun.net:5350' },

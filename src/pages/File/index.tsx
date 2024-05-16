@@ -29,48 +29,51 @@ const File: React.FC = () => {
           justifyContent: 'flex-end',
         }}
       >
-        <Button
-          type="primary"
-          onClick={async () => {
-            const [fileHandle] = await (window as any).showOpenFilePicker()
-            const file = {
-              id: crypto.randomUUID(),
-              name: fileHandle.name,
-              type: fileHandle.kind,
-              fileHandle,
-              user: myName,
-              peerId: myPeerId,
-            }
-            setFiles((o) => [...o, file])
-            sendDataToPeers({
-              type: 'file-add',
-              data: { ...file, fileHandle: undefined },
-            })
-          }}
-        >
-          文件
-        </Button>
-        <Upload
-          customRequest={({ file }: any) => {
-            const fileData = {
-              id: crypto.randomUUID(),
-              name: file.name,
-              type: 'file',
-              file,
-              contentType: file.type,
-              user: myName,
-              peerId: myPeerId,
-            }
-            setFiles((o) => [...o, fileData])
-            sendDataToPeers({
-              type: 'file-add',
-              data: { ...fileData, file: undefined },
-            })
-          }}
-          showUploadList={false}
-        >
-          <Button type="primary">文件o</Button>
-        </Upload>
+        {(window as any).showOpenFilePicker ? (
+          <Button
+            type="primary"
+            onClick={async () => {
+              const [fileHandle] = await (window as any).showOpenFilePicker()
+              const file = {
+                id: crypto.randomUUID(),
+                name: fileHandle.name,
+                type: fileHandle.kind,
+                fileHandle,
+                user: myName,
+                peerId: myPeerId,
+              }
+              setFiles((o) => [...o, file])
+              sendDataToPeers({
+                type: 'file-add',
+                data: { ...file, fileHandle: undefined },
+              })
+            }}
+          >
+            文件
+          </Button>
+        ) : (
+          <Upload
+            customRequest={({ file }: any) => {
+              const fileData = {
+                id: crypto.randomUUID(),
+                name: file.name,
+                type: 'file',
+                file,
+                contentType: file.type,
+                user: myName,
+                peerId: myPeerId,
+              }
+              setFiles((o) => [...o, fileData])
+              sendDataToPeers({
+                type: 'file-add',
+                data: { ...fileData, file: undefined },
+              })
+            }}
+            showUploadList={false}
+          >
+            <Button type="primary">文件</Button>
+          </Upload>
+        )}
         <Button
           type="primary"
           onClick={async () => {
@@ -137,7 +140,7 @@ const File: React.FC = () => {
           },
           {
             title: 'Operate',
-            render: (record) => (
+            render: (record: any) => (
               <div>
                 {record.peerId === myPeerId && (
                   <Button
@@ -164,29 +167,29 @@ const File: React.FC = () => {
                           (p) => p.peerId === record.peerId,
                         )
                         if (peer) {
-                          // if ((window as any).showSaveFilePicker) {
-                          //   const fileHandle = await (
-                          //     window as any
-                          //   ).showSaveFilePicker({ suggestedName: record.name })
-                          //   const writable = await fileHandle.createWritable()
-                          //   setFiles((o) =>
-                          //     o.map((f) => {
-                          //       if (f.id === record.id) {
-                          //         return { ...f, writable }
-                          //       }
-                          //       return f
-                          //     }),
-                          //   )
-                          //   peer.conn?.send({
-                          //     type: 'request-download',
-                          //     data: record.id,
-                          //   })
-                          // } else {
-                          peer.conn?.send({
-                            type: 'request-download-legacy',
-                            data: record.id,
-                          })
-                          // }
+                          if ((window as any).showSaveFilePicker) {
+                            const fileHandle = await (
+                              window as any
+                            ).showSaveFilePicker({ suggestedName: record.name })
+                            const writable = await fileHandle.createWritable()
+                            setFiles((o) =>
+                              o.map((f) => {
+                                if (f.id === record.id) {
+                                  return { ...f, writable }
+                                }
+                                return f
+                              }),
+                            )
+                            peer.conn?.send({
+                              type: 'request-download',
+                              data: record.id,
+                            })
+                          } else {
+                            peer.conn?.send({
+                              type: 'request-download-legacy',
+                              data: record.id,
+                            })
+                          }
                         } else {
                           notification.error({
                             message: '该文件发送人已离线',

@@ -213,6 +213,7 @@ export function downloadFile(data: any) {
       const a = document.createElement('a')
       a.href = url
       a.download = fileData.name
+      a.target = '_blank'
       a.click()
       URL.revokeObjectURL(url)
     }
