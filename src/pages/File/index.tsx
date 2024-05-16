@@ -3,7 +3,7 @@ import { useAtom, useAtomValue } from 'jotai'
 import { myNameAtom, myPeerIdAtom, peersAtom } from '@/atom'
 import { sendDataToPeers } from '@/utils/peer'
 import { filesAtom } from './atom'
-import { getFilesRecursively, createFileWritable } from './util'
+import { getFilesRecursively } from './util'
 
 const File: React.FC = () => {
   const [files, setFiles] = useAtom(filesAtom)
@@ -51,10 +51,10 @@ const File: React.FC = () => {
           文件
         </Button>
         <Upload
-          customRequest={({ file, filename }: any) => {
+          customRequest={({ file }: any) => {
             const fileData = {
               id: crypto.randomUUID(),
-              name: filename,
+              name: file.name,
               type: 'file',
               file,
               contentType: file.type,
@@ -164,29 +164,29 @@ const File: React.FC = () => {
                           (p) => p.peerId === record.peerId,
                         )
                         if (peer) {
-                          if ((window as any).showSaveFilePicker) {
-                            const fileHandle = await (
-                              window as any
-                            ).showSaveFilePicker({ suggestedName: record.name })
-                            const writable = await fileHandle.createWritable()
-                            setFiles((o) =>
-                              o.map((f) => {
-                                if (f.id === record.id) {
-                                  return { ...f, writable }
-                                }
-                                return f
-                              }),
-                            )
-                            peer.conn?.send({
-                              type: 'request-download',
-                              data: record.id,
-                            })
-                          } else {
-                            peer.conn?.send({
-                              type: 'request-download-legacy',
-                              data: record.id,
-                            })
-                          }
+                          // if ((window as any).showSaveFilePicker) {
+                          //   const fileHandle = await (
+                          //     window as any
+                          //   ).showSaveFilePicker({ suggestedName: record.name })
+                          //   const writable = await fileHandle.createWritable()
+                          //   setFiles((o) =>
+                          //     o.map((f) => {
+                          //       if (f.id === record.id) {
+                          //         return { ...f, writable }
+                          //       }
+                          //       return f
+                          //     }),
+                          //   )
+                          //   peer.conn?.send({
+                          //     type: 'request-download',
+                          //     data: record.id,
+                          //   })
+                          // } else {
+                          peer.conn?.send({
+                            type: 'request-download-legacy',
+                            data: record.id,
+                          })
+                          // }
                         } else {
                           notification.error({
                             message: '该文件发送人已离线',
