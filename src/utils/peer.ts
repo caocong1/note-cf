@@ -35,9 +35,9 @@ export let peer: Peer
 export function initPeer() {
   const myPeerId = store.get(myPeerIdAtom)
   peer = new Peer(myPeerId, {
-    host: import.meta.env.VITE_HOST,
-    port: import.meta.env.VITE_PORT,
-    secure: import.meta.env.VITE_SECURE === 'true',
+    host: import.meta.env.VITE_HOST || location.hostname,
+    port: import.meta.env.VITE_PORT || location.port,
+    secure: import.meta.env.VITE_SECURE ? (import.meta.env.VITE_SECURE === 'true') : location.protocol === 'https:',
     path: import.meta.env.VITE_PEER_PATH + 'peerjs',
     config: {
       iceServers: [

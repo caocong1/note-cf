@@ -79,13 +79,7 @@ let peerServer
 //   process.env.VITE_SECURE,
 //   typeof process.env.VITE_SECURE,
 // )
-if (process.env.VITE_SECURE === 'false') {
-  const server = app.listen(process.env.VITE_PORT)
-  peerServer = ExpressPeerServer(server, {
-    debug: true,
-    path: '/',
-  })
-} else if (process.env.VITE_SECURE === 'true') {
+if (process.env.VITE_SECURE === 'true') {
   const server = https
     .createServer(
       {
@@ -100,6 +94,12 @@ if (process.env.VITE_SECURE === 'false') {
     path: '/',
     sslkey: fs.readFileSync(process.env.SSL_KEY),
     sslcert: fs.readFileSync(process.env.SSL_CERT),
+  })
+} else {
+  const server = app.listen(process.env.VITE_PORT)
+  peerServer = ExpressPeerServer(server, {
+    debug: true,
+    path: '/',
   })
 }
 
