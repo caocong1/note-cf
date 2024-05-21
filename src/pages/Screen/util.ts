@@ -30,6 +30,27 @@ export function removeScreenBoardObject(data: any) {
   removeObject && screenCanvas.remove(removeObject)
 }
 
+function resizeCanvas() {
+  const newWidth = window.innerWidth
+  const newHeight = window.innerHeight - 50
+
+  const canvasEl = document.getElementById('screen-canvas') as HTMLCanvasElement
+  canvasEl.width = newWidth
+  canvasEl.height = newHeight
+  canvasEl.style.width = newWidth + 'px'
+  canvasEl.style.height = newHeight + 'px'
+
+  // 重置fabric画布的大小
+  screenCanvas.width = newWidth
+  screenCanvas.height = newHeight
+  screenCanvas.calcOffset()
+  screenCanvas.renderAll()
+}
+
+const resize = debounce(resizeCanvas, 200)
+
+let canvasRequestAnimFrame: number
+
 const initScreenCanvas = () => {
   if (screenCanvas) {
     window.removeEventListener('resize', resizeCanvas)
@@ -69,7 +90,7 @@ const initScreenCanvas = () => {
 
     // 以鼠标所在位置为原点缩放
     const point = new Point(opt.e.offsetX, opt.e.offsetY)
-    console.log('zoom', zoom)
+    // console.log('zoom', zoom)
     screenCanvas.zoomToPoint(
       point,
       zoom, // 传入修改后的缩放级别
@@ -104,33 +125,18 @@ const initScreenCanvas = () => {
     }
   })
 
-  function resizeCanvas() {
-    const newWidth = window.innerWidth
-    const newHeight = window.innerHeight - 50
-
-    const canvasEl = document.getElementById(
-      'screen-canvas',
-    ) as HTMLCanvasElement
-    canvasEl.width = newWidth
-    canvasEl.height = newHeight
-    canvasEl.style.width = newWidth + 'px'
-    canvasEl.style.height = newHeight + 'px'
-
-    // 重置fabric画布的大小
-    screenCanvas.width = newWidth
-    screenCanvas.height = newHeight
-    screenCanvas.calcOffset()
-    screenCanvas.renderAll()
-  }
-
-  const resize = debounce(resizeCanvas, 200)
-
   window.addEventListener('resize', resize)
 
-  util.requestAnimFrame(function render() {
+  canvasRequestAnimFrame = util.requestAnimFrame(function render() {
     screenCanvas.renderAll()
-    util.requestAnimFrame(render)
+    canvasRequestAnimFrame = util.requestAnimFrame(render)
   })
+}
+const destroyScreenCanvas = () => {
+  window.removeEventListener('resize', resize)
+  // console.log('destroyScreenCanvas', screenCanvas, canvasRequestAnimFrame)
+  screenCanvas && screenCanvas.dispose()
+  canvasRequestAnimFrame && util.cancelAnimFrame(canvasRequestAnimFrame)
 }
 
 export const resetVideo = () => {
@@ -169,6 +175,7 @@ export const resetVideo = () => {
     stream: null,
   })
   video = document.createElement('video')
+  destroyScreenCanvas()
 }
 
 export function playVideo(data: StreamData) {
@@ -214,7 +221,7 @@ export function playVideo(data: StreamData) {
     screenCanvas.add(canvasVideo)
     video.play()
     store.set(streamingDataAtom, data)
-    checkVideoSizeInterval = setInterval(checkVideoSize, 1000)
+    // checkVideoSizeInterval = setInterval(checkVideoSize, 1000)
   }
   const tracks = data.stream?.getTracks()
   if (tracks?.length) {
@@ -247,43 +254,43 @@ export function stopScreen(data: any) {
   }
 }
 
-async function getStreamDimensions(stream: MediaStream) {
-  // const stream = await navigator.mediaDevices.getDisplayMedia({ video: true })
-  const video = document.createElement('video')
-  video.style.display = 'none'
-  document.body.appendChild(video)
-  video.srcObject = stream
+// async function getStreamDimensions(stream: MediaStream) {
+//   // const stream = await navigator.mediaDevices.getDisplayMedia({ video: true })
+//   const video = document.createElement('video')
+//   video.style.display = 'none'
+//   document.body.appendChild(video)
+//   video.srcObject = stream
 
-  return new Promise((resolve) => {
-    video.onloadedmetadata = () => {
-      resolve({ width: video.videoWidth, height: video.videoHeight })
-      document.body.removeChild(video)
-    }
-  })
-}
+//   return new Promise((resolve) => {
+//     video.onloadedmetadata = () => {
+//       resolve({ width: video.videoWidth, height: video.videoHeight })
+//       document.body.removeChild(video)
+//     }
+//   })
+// }
 
-function checkVideoSize() {
-  const streamingData = store.get(streamingDataAtom)
-  if (streamingData.stream) {
-    getStreamDimensions(streamingData.stream).then((size: any) => {
-      if (size.width === video.width && size.height === video.height) {
-        return
-      }
-      // console.log('video size change')
-      video.width = size.width
-      video.height = size.height
-      const canvasVideo = new FabricImage(video, {
-        left: 0,
-        top: 0,
-        width: video.width,
-        height: video.height,
-        selectable: false,
-      })
-      screenCanvas.remove(...screenCanvas.getObjects())
-      screenCanvas.add(canvasVideo)
-    })
-  }
-}
+// function checkVideoSize() {
+//   const streamingData = store.get(streamingDataAtom)
+//   if (streamingData.stream) {
+//     getStreamDimensions(streamingData.stream).then((size: any) => {
+//       if (size.width === video.width && size.height === video.height) {
+//         return
+//       }
+//       // console.log('video size change')
+//       video.width = size.width
+//       video.height = size.height
+//       const canvasVideo = new FabricImage(video, {
+//         left: 0,
+//         top: 0,
+//         width: video.width,
+//         height: video.height,
+//         selectable: false,
+//       })
+//       screenCanvas.remove(...screenCanvas.getObjects())
+//       screenCanvas.add(canvasVideo)
+//     })
+//   }
+// }
 
 function debounce(func: any, wait: number) {
   let timeout: any

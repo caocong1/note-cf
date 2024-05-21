@@ -88,7 +88,7 @@ const Screen: React.FC = () => {
         width: '100dvw',
         height: 'calc(100dvh - 50px)',
         boxSizing: 'border-box',
-        overflow: 'auto',
+        overflow: 'hidden',
         position: 'relative',
       }}
     >
