@@ -1,9 +1,10 @@
-import { Button, Progress, Table, Upload, notification } from 'antd'
+import { Button, Progress, Table, Upload } from 'antd'
 import { useAtom, useAtomValue } from 'jotai'
 import { myNameAtom, myPeerIdAtom, peersAtom } from '@/atom'
 import { sendDataToPeers } from '@/utils/peer'
 import { filesAtom } from './atom'
 import { getFilesRecursively } from './util'
+import { notification } from '../Layout/Layout'
 
 const File: React.FC = () => {
   const [files, setFiles] = useAtom(filesAtom)

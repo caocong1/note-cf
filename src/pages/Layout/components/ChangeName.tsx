@@ -1,9 +1,10 @@
-import { Button, Input, InputRef, Modal, notification } from 'antd'
+import { Button, Input, InputRef, Modal } from 'antd'
 import { useAtom, useAtomValue, useSetAtom } from 'jotai'
 import { myNameAtom, myPeerIdAtom, peersAtom } from '../../../atom'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import request from '../../../request'
 import { roomName, sendDataToPeers } from '../../../utils/peer'
+import { notification } from '../Layout'
 
 const ChangeName: React.FC = () => {
   const [myName, setMyName] = useAtom(myNameAtom)

@@ -1,4 +1,4 @@
-import { myPeerIdAtom, store } from '@/atom'
+import { myPeerIdAtom, peersAtom, store } from '@/atom'
 import { FabricImage, Canvas, Point, util, PencilBrush } from 'fabric'
 import {
   StreamData,
@@ -6,8 +6,8 @@ import {
   showAlertAtom,
   streamingDataAtom,
 } from './atom'
-import { notification } from 'antd'
 import { sendDataToPeers } from '@/utils/peer'
+import { notification } from '../Layout/Layout'
 
 let video: HTMLVideoElement
 // export let canvasVideo: FabricImage
@@ -51,11 +51,12 @@ const resize = debounce(resizeCanvas, 200)
 
 let canvasRequestAnimFrame: number
 
-const initScreenCanvas = () => {
-  if (screenCanvas) {
-    window.removeEventListener('resize', resizeCanvas)
-    screenCanvas.dispose()
-  }
+function initScreenCanvas() {
+  // if (screenCanvas) {
+  //   window.removeEventListener('resize', resizeCanvas)
+  //   screenCanvas.dispose()
+  // }
+  unsubscribeEvent()
   const canvasEl = document.getElementById('screen-canvas') as HTMLCanvasElement
   canvasEl.width = window.innerWidth
   canvasEl.height = window.innerHeight - 50
@@ -90,7 +91,7 @@ const initScreenCanvas = () => {
 
     // 以鼠标所在位置为原点缩放
     const point = new Point(opt.e.offsetX, opt.e.offsetY)
-    // console.log('zoom', zoom)
+    console.log('zoom', zoom)
     screenCanvas.zoomToPoint(
       point,
       zoom, // 传入修改后的缩放级别
@@ -132,7 +133,7 @@ const initScreenCanvas = () => {
     canvasRequestAnimFrame = util.requestAnimFrame(render)
   })
 }
-const destroyScreenCanvas = () => {
+function unsubscribeEvent() {
   window.removeEventListener('resize', resize)
   // console.log('destroyScreenCanvas', screenCanvas, canvasRequestAnimFrame)
   screenCanvas && screenCanvas.dispose()
@@ -153,7 +154,7 @@ export const resetVideo = () => {
   if (checkVideoSizeInterval) {
     clearInterval(checkVideoSizeInterval)
   }
-  notification.warning({ message: '屏幕共享结束' })
+  // notification.warning({ message: '屏幕共享结束' })
   const streamingData = store.get(streamingDataAtom)
   const myPeerId = store.get(myPeerIdAtom)
   if (streamingData.id === myPeerId) {
@@ -161,10 +162,10 @@ export const resetVideo = () => {
       type: 'screen-stop',
       data: { peerId: myPeerId },
     })
-  }
-  const tracks = streamingData.stream?.getTracks()
-  if (tracks?.length) {
-    tracks[0].stop()
+    const tracks = streamingData.stream?.getTracks()
+    if (tracks?.length) {
+      tracks[0].stop()
+    }
   }
   if (screenCanvas) {
     screenCanvas.remove(...screenCanvas.getObjects())
@@ -175,9 +176,10 @@ export const resetVideo = () => {
     stream: null,
   })
   video = document.createElement('video')
-  destroyScreenCanvas()
+  unsubscribeEvent()
 }
 
+let canvasVideo: FabricImage
 export function playVideo(data: StreamData) {
   // const canvasEl = document.getElementById('screen-canvas') as HTMLCanvasElement
   // canvasEl.width = window.innerWidth
@@ -191,41 +193,80 @@ export function playVideo(data: StreamData) {
   // document.body.appendChild(video)
   video.srcObject = data.stream
   video.onloadedmetadata = () => {
+    console.log('onloadedmetadata', video.videoWidth, video.videoHeight)
     // console.log(video.videoWidth, video.videoHeight, window.devicePixelRatio)
-    const myPeerId = store.get(myPeerIdAtom)
-    if (data.id === myPeerId) {
-      video.width = video.videoWidth * window.devicePixelRatio
-      video.height = video.videoHeight * window.devicePixelRatio
-    } else {
-      video.width = video.videoWidth
-      video.height = video.videoHeight
-    }
-    const canvasVideo = new FabricImage(video, {
+    // const myPeerId = store.get(myPeerIdAtom)
+    // if (data.id === myPeerId) {
+    //   video.width = video.videoWidth * window.devicePixelRatio
+    //   video.height = video.videoHeight * window.devicePixelRatio
+    // } else {
+    //   video.width = video.videoWidth
+    //   video.height = video.videoHeight
+    // }
+    // canvasVideo = new FabricImage(video, {
+    //   left: 0,
+    //   top: 0,
+    //   width: video.width,
+    //   height: video.height,
+    //   selectable: false,
+    // })
+    // const widthRadio = window.innerWidth / video.width
+    // const heightRadio = (window.innerHeight - 50) / video.height
+    // const zoom = Math.min(widthRadio, heightRadio)
+    // const point = new Point(0, 0)
+    // console.log(
+    //   'add canvasVideo',
+    //   video.videoHeight,
+    //   video.height,
+    //   window.innerHeight - 50,
+    //   window.devicePixelRatio,
+    //   zoom,
+    // )
+    // screenCanvas.zoomToPoint(point, zoom)
+    video.width = video.videoWidth
+    video.height = video.videoHeight
+    canvasVideo = new FabricImage(video, {
       left: 0,
       top: 0,
-      width: video.width,
-      height: video.height,
+      width: video.videoWidth,
+      height: video.videoHeight,
       selectable: false,
     })
-    let widthRadio = window.innerWidth / video.width
-    let heightRadio = (window.innerHeight - 50) / video.height
-    if (data.id === myPeerId) {
-      widthRadio = (window.innerWidth * window.devicePixelRatio) / video.width
-      heightRadio =
-        ((window.innerHeight - 50) * window.devicePixelRatio) / video.height
-    }
-    const zoom = Math.min(widthRadio, heightRadio)
-    // console.log('zoom', zoom, video.width, window.innerWidth)
-    const point = new Point(0, 0)
-    screenCanvas.zoomToPoint(point, zoom)
+    // restoreSize()
     screenCanvas.add(canvasVideo)
     video.play()
     store.set(streamingDataAtom, data)
     // checkVideoSizeInterval = setInterval(checkVideoSize, 1000)
   }
+  video.onresize = () => {
+    console.log('video.onresize')
+    // const myPeerId = store.get(myPeerIdAtom)
+    // if (data.id === myPeerId) {
+    //   video.width = video.videoWidth * window.devicePixelRatio
+    //   video.height = video.videoHeight * window.devicePixelRatio
+    // } else {
+    //   video.width = video.videoWidth
+    //   video.height = video.videoHeight
+    // }
+    // if (canvasVideo) {
+    //   // video.width = video.videoWidth
+    //   // video.height = video.videoHeight
+    //   const myPeerId = store.get(myPeerIdAtom)
+    //   if (data.id === myPeerId) {
+    //     video.width = video.videoWidth * window.devicePixelRatio
+    //     video.height = video.videoHeight * window.devicePixelRatio
+    //   } else {
+    //     video.width = video.videoWidth
+    //     video.height = video.videoHeight
+    //   }
+    //   // canvasVideo.width = video.width
+    //   // canvasVideo.height = video.height
+    // }
+    restoreSize()
+  }
   const tracks = data.stream?.getTracks()
   if (tracks?.length) {
-    console.log('track', tracks[0])
+    // console.log('track', tracks[0])
     tracks[0].onended = () => {
       // console.log('video.onended')
       resetVideo()
@@ -234,9 +275,53 @@ export function playVideo(data: StreamData) {
 }
 
 export function restoreSize() {
+  // const myPeerId = store.get(myPeerIdAtom)
+  // const streamingData = store.get(streamingDataAtom)
+  // if (streamingData.id === myPeerId) {
+  //   video.width = video.videoWidth * window.devicePixelRatio
+  //   video.height = video.videoHeight * window.devicePixelRatio
+  // } else {
+  //   video.width = video.videoWidth
+  //   video.height = video.videoHeight
+  // }
+  console.log(
+    'restoreSize',
+    canvasVideo,
+    video.width,
+    video.videoWidth,
+    canvasVideo?.width,
+  )
+  if (!canvasVideo) {
+    return
+  }
+  if (
+    video.width !== video.videoWidth ||
+    video.height !== video.videoHeight ||
+    video.width !== canvasVideo.width ||
+    video.height !== canvasVideo.height
+  ) {
+    video.width = video.videoWidth
+    video.height = video.videoHeight
+    canvasVideo.width = video.width
+    canvasVideo.height = video.height
+  }
+  // console.log('restoreSize', video.width, video.videoWidth, canvasVideo.width)
+  // video.width = video.videoWidth
+  // video.height = video.videoHeight
+  // canvasVideo.width = video.width
+  // canvasVideo.height = video.height
   const widthRadio = window.innerWidth / video.width
   const heightRadio = (window.innerHeight - 50) / video.height
   const zoom = Math.min(widthRadio, heightRadio)
+  console.log(
+    'restoreSize',
+    video.videoHeight,
+    video.height,
+    canvasVideo.height,
+    window.innerHeight - 50,
+    window.devicePixelRatio,
+    zoom,
+  )
   const point = new Point(0, 0)
   screenCanvas.absolutePan(point)
   screenCanvas.zoomToPoint(point, zoom)
@@ -249,6 +334,9 @@ export function stopScreen(data: any) {
   if (peerId !== myPeerId) {
     store.set(remoteStreamDataAtom, (o) => o.filter((v) => v.id !== peerId))
     if (streamingData.id === peerId) {
+      const peers = store.get(peersAtom)
+      const peer = peers.find((p) => p.peerId === peerId)
+      notification.warning({ message: `< ${peer?.name} >停止共享屏幕` })
       resetVideo()
     }
   }

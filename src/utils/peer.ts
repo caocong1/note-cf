@@ -1,10 +1,9 @@
 import Peer, { DataConnection } from 'peerjs'
 import { myNameAtom, myPeerIdAtom, peersAtom, store } from '../atom'
 import PeerConnection, { PeerData } from './PeerConnection'
-import { Modal, notification } from 'antd'
 import request from '../request'
 import { remoteStreamDataAtom, streamingDataAtom } from '../pages/Screen/atom'
-import { pageLoadingAtom } from '../pages/Layout/atom'
+import { componentAtom, pageLoadingAtom } from '../pages/Layout/atom'
 import {
   clearBoard,
   jsonAddToBoard,
@@ -12,6 +11,7 @@ import {
 } from '@/pages/Board/util'
 import {
   clearScreenBoard,
+  playVideo,
   removeScreenBoardObject,
   resetVideo,
   screenJsonAddToBoard,
@@ -27,6 +27,7 @@ import {
   startReceiveFile,
 } from '@/pages/File/util'
 import { noteChange } from '@/pages/Note/util'
+import { modal, notification } from '@/pages/Layout/Layout'
 
 export const roomName = decodeURI(location.pathname)
 
@@ -37,7 +38,9 @@ export function initPeer() {
   peer = new Peer(myPeerId, {
     host: import.meta.env.VITE_HOST || location.hostname,
     port: import.meta.env.VITE_PORT || location.port,
-    secure: import.meta.env.VITE_SECURE ? (import.meta.env.VITE_SECURE === 'true') : location.protocol === 'https:',
+    secure: import.meta.env.VITE_SECURE
+      ? import.meta.env.VITE_SECURE === 'true'
+      : location.protocol === 'https:',
     path: import.meta.env.VITE_PEER_PATH + 'peerjs',
     config: {
       iceServers: [
@@ -101,10 +104,20 @@ export function initPeer() {
           return [...o]
         } else {
           const peer = peers.find((p) => p.peerId === call.peer)
-          return [
-            ...o,
-            { id: call.peer, name: peer?.name, stream: remoteStream },
-          ]
+          const newStreamData = {
+            id: call.peer,
+            name: peer?.name,
+            stream: remoteStream,
+          }
+          modal.confirm({
+            title: '提示',
+            content: `是否接收来自< ${peer?.name} >的屏幕共享`,
+            onOk() {
+              store.set(componentAtom, 'screen')
+              playVideo(newStreamData)
+            },
+          })
+          return [...o, newStreamData]
         }
       })
     })
@@ -113,7 +126,7 @@ export function initPeer() {
   peer.on('error', function (e) {
     console.error(e)
     if (e.message.includes('is taken')) {
-      Modal.confirm({
+      modal.confirm({
         title: '提示',
         content: '同一浏览器只能开一个Note窗口',
         onOk() {
@@ -143,7 +156,13 @@ export function sendDataToPeers(data: { type: string; data: any }) {
 function addNewPeer(res: PeerData) {
   store.set(peersAtom, (old) => {
     const isExist = old.some((peer) => peer.peerId === res.peerId)
-    return isExist ? old : [...old, new PeerConnection(res)]
+    if (isExist) {
+      return old
+    } else {
+      notification.info({ message: `< ${res.name} >加入房间` })
+      return [...old, new PeerConnection(res)]
+    }
+    // return isExist ? old : [...old, new PeerConnection(res)]
   })
 }
 
@@ -224,11 +243,14 @@ export function initConn(conn: DataConnection) {
         case 'screen-board-object-remove':
           removeScreenBoardObject(data)
           break
+        case 'peer-close':
+          removePeer(data)
+          break
       }
     })
   })
   conn.on('close', () => {
-    // console.log("conn close", conn.peer);
+    console.log('conn close', conn.peer)
     removePeer(conn.peer)
     const streamingData = store.get(streamingDataAtom)
     store.set(remoteStreamDataAtom, (o) => o.filter((v) => v.id !== conn.peer))
@@ -236,8 +258,8 @@ export function initConn(conn: DataConnection) {
       resetVideo()
     }
   })
-  conn.on('error', () => {
-    // console.log("conn close", this.peerId);
+  conn.on('error', (e) => {
+    console.log('conn error', conn.peer, e)
     removePeer(conn.peer)
     const streamingData = store.get(streamingDataAtom)
     store.set(remoteStreamDataAtom, (o) => o.filter((v) => v.id !== conn.peer))
@@ -248,7 +270,16 @@ export function initConn(conn: DataConnection) {
 }
 
 function removePeer(peerId: string) {
-  store.set(peersAtom, (old) =>
-    old.filter((peer: PeerConnection) => peer.peerId !== peerId),
-  )
+  store.set(peersAtom, (old) => {
+    const peer = old.find((peer: PeerConnection) => peer.peerId === peerId)
+    if (peer?.status === 'connected') {
+      notification.info({ message: `< ${peer.name} >离开房间` })
+    }
+    return old.filter((peer: PeerConnection) => peer.peerId !== peerId)
+  })
 }
+
+window.addEventListener('beforeunload', () => {
+  const myPeerId = store.get(myPeerIdAtom)
+  sendDataToPeers({ type: 'peer-close', data: myPeerId })
+})

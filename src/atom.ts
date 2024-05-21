@@ -15,3 +15,10 @@ export const myNameAtom = atomWithStorage(
 )
 
 export const peersAtom = atom<PeerConnection[]>([])
+
+// setInterval(() => {
+//   const peers = store.get(peersAtom)
+//   peers.forEach((peer) => {
+//     console.log(peer.name, peer.status)
+//   })
+// }, 5000)

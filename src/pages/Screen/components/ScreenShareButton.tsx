@@ -6,7 +6,6 @@ import StopSvg from '@/assets/stop.svg?react'
 import PlaySvg from '@/assets/play.svg?react'
 import { myPeerIdAtom } from '@/atom'
 import { playVideo, resetVideo } from '../util'
-import { notification } from 'antd'
 
 const ScreenShareButton: React.FC = () => {
   const streamingData = useAtomValue(streamingDataAtom)
@@ -48,12 +47,12 @@ const ScreenShareButton: React.FC = () => {
             })
             .catch((e) => {
               console.log('getDisplayMedia error', e)
-              if (e.message.includes('Permission denied')) {
-                notification.error({
-                  message: '错误',
-                  description: 'Permission denied，可能是浏览器不支持',
-                })
-              }
+              // if (e.message.includes('Permission denied')) {
+              //   notification.error({
+              //     message: '错误',
+              //     description: 'Permission denied，可能是浏览器不支持',
+              //   })
+              // }
               resetVideo()
               sendDataToPeers({
                 type: 'screen-stop',

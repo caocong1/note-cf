@@ -1,7 +1,7 @@
 import React, { useLayoutEffect } from 'react'
 import { useAtom, useAtomValue, useSetAtom } from 'jotai'
 import { myPeerIdAtom, peersAtom } from '../../atom'
-import { Badge, Dropdown, Radio, Spin, Tag } from 'antd'
+import { App, Badge, Dropdown, Radio, Spin, Tag } from 'antd'
 import { initPeer, roomName } from '../../utils/peer'
 import { PresetStatusColorType } from 'antd/es/_util/colors'
 import ChangeName from './components/ChangeName'
@@ -13,12 +13,16 @@ import RemoteStreamBadge from '../Screen/components/RemoteStreamBadge'
 import ScreenShareButton from '../Screen/components/ScreenShareButton'
 import { pageLoadingAtom, componentAtom } from './atom'
 import { showAlertAtom } from '../Screen/atom'
+import { useAppProps } from 'antd/es/app/context'
 
 const badgeStatus: Record<string, PresetStatusColorType> = {
   connected: 'success',
   connectting: 'warning',
   self: 'default',
 }
+export let message: useAppProps['message']
+export let modal: useAppProps['modal']
+export let notification: useAppProps['notification']
 
 const Layout: React.FC = () => {
   const pageLoading = useAtomValue(pageLoadingAtom)
@@ -26,6 +30,10 @@ const Layout: React.FC = () => {
   const [component, setComponent] = useAtom(componentAtom)
   const myPeerId = useAtomValue(myPeerIdAtom)
   const setShowAlert = useSetAtom(showAlertAtom)
+  const app = App.useApp()
+  message = app.message
+  modal = app.modal
+  notification = app.notification
 
   useLayoutEffect(() => {
     initPeer()
