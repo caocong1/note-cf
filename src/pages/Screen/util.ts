@@ -155,6 +155,10 @@ export const resetVideo = () => {
       type: 'screen-stop',
       data: { peerId: myPeerId },
     })
+    const tracks = streamingData.stream?.getTracks()
+    if (tracks?.length) {
+      tracks[0].stop()
+    }
   }
   if (screenCanvas) {
     screenCanvas.remove(...screenCanvas.getObjects())
