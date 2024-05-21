@@ -1,8 +1,7 @@
 import Icon, { ClearOutlined } from '@ant-design/icons'
-import { Button, ColorPicker, GetProp, Popover, Slider } from 'antd'
+import { Button, ColorPicker, Popover, Slider } from 'antd'
 import PenSvg from '@/assets/pen.svg?react'
 import React, { useState } from 'react'
-import { ColorPickerProps } from 'antd/es/color-picker'
 import { PencilBrush } from 'fabric'
 
 const ToolBar: React.FC<{
@@ -39,12 +38,12 @@ const ToolBar: React.FC<{
 
 export default ToolBar
 
-type Color = GetProp<ColorPickerProps, 'value'>
+// type Color = GetProp<ColorPickerProps, 'value'>
 
 const PenSetting: React.FC<{ pencilBrush: PencilBrush }> = ({
   pencilBrush,
 }) => {
-  const [color, setColor] = useState<Color>('red')
+  const [color, setColor] = useState<string>('red')
   const [inputValue, setInputValue] = useState<number>(10)
 
   return (
@@ -53,7 +52,7 @@ const PenSetting: React.FC<{ pencilBrush: PencilBrush }> = ({
         style={{
           height: inputValue,
           // width: '100%',
-          backgroundColor: (color as any).toHexString(),
+          backgroundColor: color,
           marginBottom: 8,
           borderRadius: inputValue / 2,
         }}
@@ -62,7 +61,7 @@ const PenSetting: React.FC<{ pencilBrush: PencilBrush }> = ({
         value={color}
         onChange={(res) => {
           pencilBrush.color = res.toHexString()
-          setColor(res)
+          setColor(res.toHexString())
         }}
       />
       <Slider
