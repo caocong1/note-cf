@@ -82,16 +82,16 @@ let peerServer
 // )
 const secure = process.env.SSL_KEY && process.env.SSL_CERT
 const port = process.env.VITE_SERVER_PORT || process.env.VITE_PORT
-execSync(
-  `lsof -i :${port} | grep LISTEN | awk '{print $2}' | xargs kill -9`,
-  (err, stdout, stderr) => {
-    if (err) {
-      console.error(`exec error: ${err}`)
-      return
-    }
-    console.log(`Port ${port} is now free!`, stdout, stderr)
-  },
-)
+// execSync(
+//   `lsof -i :${port} | grep LISTEN | awk '{print $2}' | xargs kill -9`,
+//   (err, stdout, stderr) => {
+//     if (err) {
+//       console.error(`exec error: ${err}`)
+//       return
+//     }
+//     console.log(`Port ${port} is now free!`, stdout, stderr)
+//   },
+// )
 let server
 if (secure) {
   server = https

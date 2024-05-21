@@ -91,7 +91,7 @@ function initScreenCanvas() {
 
     // 以鼠标所在位置为原点缩放
     const point = new Point(opt.e.offsetX, opt.e.offsetY)
-    console.log('zoom', zoom)
+    // console.log('zoom', zoom)
     screenCanvas.zoomToPoint(
       point,
       zoom, // 传入修改后的缩放级别
@@ -193,7 +193,7 @@ export function playVideo(data: StreamData) {
   // document.body.appendChild(video)
   video.srcObject = data.stream
   video.onloadedmetadata = () => {
-    console.log('onloadedmetadata', video.videoWidth, video.videoHeight)
+    // console.log('onloadedmetadata', video.videoWidth, video.videoHeight)
     // console.log(video.videoWidth, video.videoHeight, window.devicePixelRatio)
     // const myPeerId = store.get(myPeerIdAtom)
     // if (data.id === myPeerId) {
@@ -239,7 +239,7 @@ export function playVideo(data: StreamData) {
     // checkVideoSizeInterval = setInterval(checkVideoSize, 1000)
   }
   video.onresize = () => {
-    console.log('video.onresize')
+    // console.log('video.onresize')
     // const myPeerId = store.get(myPeerIdAtom)
     // if (data.id === myPeerId) {
     //   video.width = video.videoWidth * window.devicePixelRatio
@@ -284,13 +284,13 @@ export function restoreSize() {
   //   video.width = video.videoWidth
   //   video.height = video.videoHeight
   // }
-  console.log(
-    'restoreSize',
-    canvasVideo,
-    video.width,
-    video.videoWidth,
-    canvasVideo?.width,
-  )
+  // console.log(
+  //   'restoreSize',
+  //   canvasVideo,
+  //   video.width,
+  //   video.videoWidth,
+  //   canvasVideo?.width,
+  // )
   if (!canvasVideo) {
     return
   }
@@ -313,15 +313,15 @@ export function restoreSize() {
   const widthRadio = window.innerWidth / video.width
   const heightRadio = (window.innerHeight - 50) / video.height
   const zoom = Math.min(widthRadio, heightRadio)
-  console.log(
-    'restoreSize',
-    video.videoHeight,
-    video.height,
-    canvasVideo.height,
-    window.innerHeight - 50,
-    window.devicePixelRatio,
-    zoom,
-  )
+  // console.log(
+  //   'restoreSize',
+  //   video.videoHeight,
+  //   video.height,
+  //   canvasVideo.height,
+  //   window.innerHeight - 50,
+  //   window.devicePixelRatio,
+  //   zoom,
+  // )
   const point = new Point(0, 0)
   screenCanvas.absolutePan(point)
   screenCanvas.zoomToPoint(point, zoom)
