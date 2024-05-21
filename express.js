@@ -3,6 +3,7 @@ import { ExpressPeerServer } from 'peer'
 import cors from 'cors'
 import * as https from 'node:https'
 import * as fs from 'node:fs'
+import { execSync } from 'node:child_process'
 
 let peers = {}
 let content = {}
@@ -81,8 +82,19 @@ let peerServer
 // )
 const secure = process.env.SSL_KEY && process.env.SSL_CERT
 const port = process.env.VITE_SERVER_PORT || process.env.VITE_PORT
+execSync(
+  `lsof -i :${port} | grep LISTEN | awk '{print $2}' | xargs kill -9`,
+  (err, stdout, stderr) => {
+    if (err) {
+      console.error(`exec error: ${err}`)
+      return
+    }
+    console.log(`Port ${port} is now free!`, stdout, stderr)
+  },
+)
+let server
 if (secure) {
-  const server = https
+  server = https
     .createServer(
       {
         key: fs.readFileSync(process.env.SSL_KEY),
@@ -90,7 +102,7 @@ if (secure) {
       },
       app,
     )
-    .listen(port)
+    .listen(+port)
   peerServer = ExpressPeerServer(server, {
     debug: true,
     path: '/',
@@ -98,7 +110,7 @@ if (secure) {
     sslcert: fs.readFileSync(process.env.SSL_CERT),
   })
 } else {
-  const server = app.listen(port)
+  server = app.listen(+port)
   peerServer = ExpressPeerServer(server, {
     debug: true,
     path: '/',
@@ -119,3 +131,8 @@ peerServer.on('disconnect', (client) => {
 app.use(process.env.VITE_PEER_PATH + 'peerjs', peerServer)
 
 console.log('server start')
+
+process.on('uncaughtException', (err) => {
+  console.error('There was an uncaught error', err)
+  server.close(() => process.exit(1))
+})

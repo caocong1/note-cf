@@ -9,15 +9,15 @@ export default defineConfig({
     host: '0.0.0.0',
     port: 23336,
     // proxy: {
-    //   "/api": {
-    //     target: "http://localhost:23335",
+    //   '/api': {
+    //     target: 'http://localhost:23335',
     //     changeOrigin: true,
-    //     rewrite: (path) => path.replace(/^\/api/, ""),
+    //     rewrite: (path) => path.replace(/^\/api/, ''),
     //   },
-    //   "/ws": {
-    //     target: "localhost:23335",
+    //   '/ws': {
+    //     target: 'localhost:23335',
     //     changeOrigin: true,
-    //     rewrite: (path) => path.replace(/^\/ws/, ""),
+    //     rewrite: (path) => path.replace(/^\/ws/, ''),
     //     ws: true,
     //   },
     // },
