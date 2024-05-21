@@ -168,6 +168,7 @@ export const resetVideo = () => {
     id: '',
     stream: null,
   })
+  video = document.createElement('video')
 }
 
 export function playVideo(data: StreamData) {
@@ -217,6 +218,7 @@ export function playVideo(data: StreamData) {
   }
   const tracks = data.stream?.getTracks()
   if (tracks?.length) {
+    console.log('track', tracks[0])
     tracks[0].onended = () => {
       // console.log('video.onended')
       resetVideo()
