@@ -35,21 +35,22 @@ export let peer: Peer
 
 export function initPeer() {
   const myPeerId = store.get(myPeerIdAtom)
-  peer = new Peer(myPeerId, {
-    host: import.meta.env.VITE_HOST || location.hostname,
-    port: import.meta.env.VITE_PORT || location.port,
-    secure: import.meta.env.VITE_SECURE
-      ? import.meta.env.VITE_SECURE === 'true'
-      : location.protocol === 'https:',
-    path: import.meta.env.VITE_PEER_PATH + 'peerjs',
-    config: {
-      iceServers: [
-        { urls: 'stun:freestun.net:5350' },
-        { urls: 'stun:stun.cloudflare.com:3478' },
-        { urls: 'stun:stun.l.google.com:19302' },
-      ],
-    },
-  })
+  peer = new Peer(myPeerId)
+  // peer = new Peer(myPeerId, {
+  //   host: import.meta.env.VITE_HOST || location.hostname,
+  //   port: import.meta.env.VITE_PORT || location.port,
+  //   secure: import.meta.env.VITE_SECURE
+  //     ? import.meta.env.VITE_SECURE === 'true'
+  //     : location.protocol === 'https:',
+  //   path: import.meta.env.VITE_PEER_PATH + 'peerjs',
+  //   config: {
+  //     iceServers: [
+  //       { urls: 'stun:freestun.net:5350' },
+  //       { urls: 'stun:stun.cloudflare.com:3478' },
+  //       { urls: 'stun:stun.l.google.com:19302' },
+  //     ],
+  //   },
+  // })
 
   peer.on('open', function (id) {
     console.log('My peer ID is: ' + id)
@@ -72,7 +73,7 @@ export function initPeer() {
   })
 
   peer.on('connection', function (conn) {
-    // console.log("peer connected", conn.peer);
+    console.log('peer connection', conn.peer)
     if (conn.peer === myPeerId) return
     const peers = store.get(peersAtom)
     const index = peers.findIndex(
@@ -159,7 +160,7 @@ function addNewPeer(res: PeerData) {
     if (isExist) {
       return old
     } else {
-      notification.info({ message: `< ${res.name} >加入房间` })
+      // notification.info({ message: `< ${res.name} >加入房间` })
       return [...old, new PeerConnection(res)]
     }
     // return isExist ? old : [...old, new PeerConnection(res)]
@@ -178,10 +179,11 @@ export function callToPeers(stream: any) {
 
 export function initConn(conn: DataConnection) {
   conn.on('open', () => {
-    // console.log('connect open', conn.peer)
+    console.log('connect open', conn.peer)
     store.set(peersAtom, (old) =>
       old.map((peer: PeerConnection) => {
         if (peer.peerId === conn.peer) {
+          notification.info({ message: `< ${peer.name} >加入房间` })
           peer.status = 'connected'
         }
         return peer
@@ -248,6 +250,9 @@ export function initConn(conn: DataConnection) {
           break
       }
     })
+  })
+  conn!.on('data', (res: any) => {
+    console.log('conn data outside', conn.peer, res)
   })
   conn.on('close', () => {
     console.log('conn close', conn.peer)
