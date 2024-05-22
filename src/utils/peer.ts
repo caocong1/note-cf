@@ -28,6 +28,7 @@ import {
 } from '@/pages/File/util'
 import { noteChange } from '@/pages/Note/util'
 import { modal, notification } from '@/pages/Layout/Layout'
+import { filesAtom } from '@/pages/File/atom'
 
 export const roomName = decodeURI(location.pathname)
 
@@ -217,6 +218,7 @@ export function initConn(conn: DataConnection) {
           break
         case 'file-add':
           addFile(data)
+          addFileNotice(data, conn.peer)
           break
         case 'file-remove':
           removeFile(data)
@@ -231,7 +233,10 @@ export function initConn(conn: DataConnection) {
           startReceiveFile(data)
           break
         case 'send-file':
-          downloadFile(data)
+          downloadFile(data, conn)
+          break
+        case 'download-complete':
+          downloadComplete(data)
           break
         case 'screen-stop':
           stopScreen(data)
@@ -288,3 +293,21 @@ window.addEventListener('beforeunload', () => {
   const myPeerId = store.get(myPeerIdAtom)
   sendDataToPeers({ type: 'peer-close', data: myPeerId })
 })
+
+function addFileNotice(data: any, peerId: string) {
+  const peer = store.get(peersAtom).find((p) => p.peerId === peerId)
+  if (peer)
+    notification.success({
+      message: `< ${peer.name} >分享了文件${data.type === 'directory' ? '夹' : ''}[ ${data.name} ]`,
+    })
+}
+
+function downloadComplete(data: { fileId: string; peerId: string }) {
+  const peer = store.get(peersAtom).find((p) => p.peerId === data.peerId)
+  const fileData = store.get(filesAtom).find((f) => f.id === data.fileId)
+  if (peer && fileData) {
+    notification.success({
+      message: `< ${peer.name} >下载文件${fileData.type === 'directory' ? '夹' : ''}[ ${fileData.name} ]完成`,
+    })
+  }
+}

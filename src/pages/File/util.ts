@@ -1,5 +1,7 @@
-import { store } from '@/atom'
+import { myPeerIdAtom, peersAtom, store } from '@/atom'
 import { filesAtom } from './atom'
+import { notification } from 'antd'
+import { DataConnection } from 'peerjs'
 
 export function addFile(file: any) {
   store.set(filesAtom, (old) => [...old, file])
@@ -14,7 +16,15 @@ export async function requestDownload(data: any) {
   const { conn, fileId } = data
   const files = store.get(filesAtom)
   const fileData = files.find((f) => f.id === fileId)
+  const peers = store.get(peersAtom)
+  const peer = peers.find((p) => p.peerId === conn.peer)
+  if (!peer) {
+    return
+  }
   if (fileData.type === 'file' && fileData.fileHandle) {
+    notification.success({
+      message: `< ${peer.name} >开始下载文件[ ${fileData.name} ]`,
+    })
     const file = await fileData.fileHandle.getFile()
     conn.send({
       type: 'send-file-start',
@@ -45,6 +55,9 @@ export async function requestDownload(data: any) {
     fileData.dirHandle &&
     fileData.subFiles?.length
   ) {
+    notification.success({
+      message: `< ${peer.name} >开始下载文件夹[ ${fileData.name} ]`,
+    })
     // const files = fileData.subFiles.map((fh: any) => ({
     //   name: fh.name,
     // }));
@@ -179,14 +192,22 @@ export async function createFileWritable(
   return writable
 }
 
-export function downloadFile(data: any) {
-  const { fileId, conn, buffer, end } = data
+export function downloadFile(data: any, conn: DataConnection) {
+  const { fileId, buffer, end } = data
   const files = store.get(filesAtom)
   const fileData = files.find((f) => f.id === fileId)
   if (fileData?.type === 'file' && fileData.writable) {
     fileData.writable.write(buffer).then(() => {
       if (fileData.downloading.totalSize === end) {
         fileData.writable.close()
+        notification.success({
+          message: `文件[ ${fileData.name} ]下载完成`,
+        })
+        const myPeerId = store.get(myPeerIdAtom)
+        conn.send({
+          type: 'download-complete',
+          data: { fileId, peerId: myPeerId },
+        })
       }
       store.set(filesAtom, (o) =>
         o.map((f) => {
@@ -216,6 +237,14 @@ export function downloadFile(data: any) {
       a.target = '_blank'
       a.click()
       URL.revokeObjectURL(url)
+      notification.success({
+        message: `文件[ ${fileData.name} ]下载完成`,
+      })
+      const myPeerId = store.get(myPeerIdAtom)
+      conn.send({
+        type: 'download-complete',
+        data: { fileId, peerId: myPeerId },
+      })
     }
     store.set(filesAtom, (o) =>
       o.map((f) => {
@@ -238,6 +267,22 @@ export function downloadFile(data: any) {
       subFile.writable.write(buffer).then(() => {
         if (subFile.totalSize === end) {
           subFile.writable.close()
+          notification.success({
+            message: `文件[ ${subFile.name} ]下载完成`,
+          })
+          const sf = fileData.subFiles.some(
+            (f: any) => f.id !== downloadingId && f.totalSize !== f.end,
+          )
+          if (!sf) {
+            notification.success({
+              message: `文件夹[ ${fileData.name} ]下载完成`,
+            })
+            const myPeerId = store.get(myPeerIdAtom)
+            conn.send({
+              type: 'download-complete',
+              data: { fileId, peerId: myPeerId },
+            })
+          }
         }
         store.set(filesAtom, (o) =>
           o.map((f) => {
