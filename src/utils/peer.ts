@@ -1,4 +1,4 @@
-import Peer from 'peerjs'
+import Peer, { DataConnection } from 'peerjs'
 import { myNameAtom, myPeerIdAtom, peersAtom, store } from '../atom'
 import PeerConnection, { PeerData } from './PeerConnection'
 import request from '../request'
@@ -61,7 +61,12 @@ export function initPeer() {
       (res) => {
         // console.log("add-peer", res);
         const { peers, content, board: boardPath } = res
-        peers.forEach((p: PeerData) => peer.connect(p.peerId))
+        peers.forEach((p: string) => {
+          if (p !== id) {
+            const conn = peer.connect(p)
+            connInit(conn)
+          }
+        })
         // store.set(
         //   peersAtom,
         //   peers.map((p: PeerData) => new PeerConnection(p)),
@@ -76,12 +81,9 @@ export function initPeer() {
   })
 
   peer.on('connection', function (conn) {
-    console.log('peer connection', conn.peer)
     if (conn.peer === myPeerId) return
-    // const peers = store.get(peersAtom)
-    // const index = peers.findIndex(
-    //   (peer: PeerConnection) => peer.peerId === conn.peer,
-    // )
+    console.log('peer connection', conn.peer)
+    connInit(conn)
     // if (index === -1) {
     //   request('get-peer', {
     //     pathname: roomName,
@@ -93,8 +95,11 @@ export function initPeer() {
     //   })
     //   initConn(conn)
     // }
+  })
+
+  function connInit(conn: DataConnection) {
     conn.on('open', () => {
-      console.log('connect open', conn.peer)
+      console.log('connect open', conn)
       conn.send({
         type: 'get-peer-data',
         data: { roomName, name: store.get(myNameAtom) },
@@ -114,92 +119,89 @@ export function initPeer() {
         peer.call(conn.peer, streamingData.stream!)
       }
       // this.setStatus("connected");
-      conn!.on('data', (res: any) => {
-        // console.log("conn data", conn.peer, res);
-        const { type, data } = res
-        //   console.log("conn data", this.peerId, type, data);
-        switch (type) {
-          case 'get-peer-data':
-            if (roomName === data.roomName) {
-              conn.send({
-                type: 'peer-data',
-                data: {
-                  peerId: myPeerId,
-                  name: store.get(myNameAtom),
-                },
-              })
-              addNewPeer({ peerId: conn.peer, name: data.name, conn })
-            }
-            break
-          case 'peer-data':
-            addNewPeer({ ...data, conn })
-            store.set(remoteStreamDataAtom, (o) => {
-              const sIndex = o.findIndex((v) => v.id === conn.peer)
-              if (sIndex !== -1) {
-                o[sIndex].name = data.name
-                return [...o]
-              } else {
-                return o
-              }
-            })
-            break
-          case 'change-name':
-            remotePeerNameChanged(data)
-            break
-          case 'note-change':
-            noteChange(data)
-            break
-          case 'board-object-add':
-            jsonAddToBoard([data])
-            break
-          case 'board-clear':
-            clearBoard()
-            break
-          case 'board-object-remove':
-            removeBoardObject(data)
-            break
-          case 'file-add':
-            addFile(data)
-            addFileNotice(data, conn.peer)
-            break
-          case 'file-remove':
-            removeFile(data)
-            break
-          case 'request-download':
-            requestDownload({ fileId: data, conn })
-            break
-          case 'request-download-legacy':
-            requestDownloadLegacy({ fileId: data, conn })
-            break
-          case 'send-file-start':
-            startReceiveFile(data)
-            break
-          case 'send-file':
-            downloadFile(data, conn)
-            break
-          case 'download-complete':
-            downloadComplete(data)
-            break
-          case 'screen-stop':
-            stopScreen(data)
-            break
-          case 'screen-board-object-add':
-            screenJsonAddToBoard([data])
-            break
-          case 'screen-board-clear':
-            clearScreenBoard()
-            break
-          case 'screen-board-object-remove':
-            removeScreenBoardObject(data)
-            break
-          case 'peer-close':
-            removePeer(data)
-            break
-        }
-      })
     })
-    conn!.on('data', (res: any) => {
-      console.log('conn data outside', conn.peer, res)
+    conn.on('data', (res: any) => {
+      console.log('conn data', conn.peer, res)
+      const { type, data } = res
+      //   console.log("conn data", this.peerId, type, data);
+      switch (type) {
+        case 'get-peer-data':
+          if (roomName === data.roomName) {
+            conn.send({
+              type: 'peer-data',
+              data: {
+                peerId: myPeerId,
+                name: store.get(myNameAtom),
+              },
+            })
+            addNewPeer({ peerId: conn.peer, name: data.name, conn })
+          }
+          break
+        case 'peer-data':
+          addNewPeer({ ...data, conn })
+          store.set(remoteStreamDataAtom, (o) => {
+            const sIndex = o.findIndex((v) => v.id === conn.peer)
+            if (sIndex !== -1) {
+              o[sIndex].name = data.name
+              return [...o]
+            } else {
+              return o
+            }
+          })
+          break
+        case 'change-name':
+          remotePeerNameChanged(data)
+          break
+        case 'note-change':
+          noteChange(data)
+          break
+        case 'board-object-add':
+          jsonAddToBoard([data])
+          break
+        case 'board-clear':
+          clearBoard()
+          break
+        case 'board-object-remove':
+          removeBoardObject(data)
+          break
+        case 'file-add':
+          addFile(data)
+          addFileNotice(data, conn.peer)
+          break
+        case 'file-remove':
+          removeFile(data)
+          break
+        case 'request-download':
+          requestDownload({ fileId: data, conn })
+          break
+        case 'request-download-legacy':
+          requestDownloadLegacy({ fileId: data, conn })
+          break
+        case 'send-file-start':
+          startReceiveFile(data)
+          break
+        case 'send-file':
+          downloadFile(data, conn)
+          break
+        case 'download-complete':
+          downloadComplete(data)
+          break
+        case 'screen-stop':
+          stopScreen(data)
+          break
+        case 'screen-board-object-add':
+          screenJsonAddToBoard([data])
+          break
+        case 'screen-board-clear':
+          clearScreenBoard()
+          break
+        case 'screen-board-object-remove':
+          removeScreenBoardObject(data)
+          break
+        case 'peer-close':
+          removePeer(data)
+          break
+      }
     })
     conn.on('close', () => {
       console.log('conn close', conn.peer)
@@ -223,10 +225,10 @@ export function initPeer() {
         resetVideo()
       }
     })
-  })
+  }
 
   peer.on('call', function (call) {
-    // console.log('peer call', call, call.peer, peer.id)
+    console.log('peer call', call)
     call.answer()
     call.on('stream', function (remoteStream) {
       // console.log('call stream', remoteStream)

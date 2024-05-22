@@ -2,8 +2,7 @@ import { Button, Input, InputRef, Modal } from 'antd'
 import { useAtom, useAtomValue, useSetAtom } from 'jotai'
 import { myNameAtom, myPeerIdAtom, peersAtom } from '../../../atom'
 import { useCallback, useEffect, useRef, useState } from 'react'
-import request from '../../../request'
-import { roomName, sendDataToPeers } from '../../../utils/peer'
+import { sendDataToPeers } from '../../../utils/peer'
 import { notification } from '../Layout'
 
 const ChangeName: React.FC = () => {
@@ -24,11 +23,11 @@ const ChangeName: React.FC = () => {
           name,
         },
       })
-      request('change-name', {
-        pathname: roomName,
-        peerId: myPeerId,
-        name,
-      })
+      // request('change-name', {
+      //   pathname: roomName,
+      //   peerId: myPeerId,
+      //   name,
+      // })
       setMyName(name)
       setPeers((old) =>
         old.map((peer) => {

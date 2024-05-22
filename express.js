@@ -3,7 +3,6 @@ import { ExpressPeerServer } from 'peer'
 import cors from 'cors'
 import * as https from 'node:https'
 import * as fs from 'node:fs'
-import { execSync } from 'node:child_process'
 
 let peers = {}
 let content = {}
@@ -18,21 +17,18 @@ app.use(express.static('dist'))
 
 const prefixPath = process.env.VITE_PATH || '/'
 
-app.post(prefixPath + 'get-peers', (req, res) => {
-  // console.log(req.body);
-  res.json(peers[req.body.pathname] || [])
-})
+// app.post(prefixPath + 'get-peers', (req, res) => {
+//   // console.log(req.body);
+//   res.json(peers[req.body.pathname] || [])
+// })
 
 app.post(prefixPath + 'add-peer', (req, res) => {
-  const { pathname, peerId, name } = req.body
+  const { pathname, peerId } = req.body
   // console.log("add-peer", pathname, peerId, peers);
   peers[pathname] = peers[pathname] || []
   const isExist = peers[pathname].some((p) => p.peerId === peerId)
   if (!isExist) {
-    peers[pathname].push({
-      peerId,
-      name,
-    })
+    peers[pathname].push(peerId)
   }
   // console.log("peers", peers);
   content[pathname] = content[pathname] || ''
@@ -43,24 +39,24 @@ app.post(prefixPath + 'add-peer', (req, res) => {
   })
 })
 
-app.post(prefixPath + 'get-peer', (req, res) => {
-  const { pathname, peerId } = req.body
-  // console.log("get-peer", pathname, peerId);
-  peers[pathname] = peers[pathname] || []
-  const peer = peers[pathname].find((p) => p.peerId === peerId)
-  res.send(peer)
-})
+// app.post(prefixPath + 'get-peer', (req, res) => {
+//   const { pathname, peerId } = req.body
+//   // console.log("get-peer", pathname, peerId);
+//   peers[pathname] = peers[pathname] || []
+//   const peer = peers[pathname].find((p) => p.peerId === peerId)
+//   res.send(peer)
+// })
 
-app.post(prefixPath + 'change-name', (req, res) => {
-  const { pathname, peerId, name } = req.body
-  peers[pathname] = peers[pathname] || []
-  const peer = peers[pathname].find((p) => p.peerId === peerId)
-  if (peer) {
-    peer.name = name
-  }
-  // console.log("change-name", pathname, peerId, name, peers);
-  res.send({ msg: 'success' })
-})
+// app.post(prefixPath + 'change-name', (req, res) => {
+//   const { pathname, peerId, name } = req.body
+//   peers[pathname] = peers[pathname] || []
+//   const peer = peers[pathname].find((p) => p.peerId === peerId)
+//   if (peer) {
+//     peer.name = name
+//   }
+//   // console.log("change-name", pathname, peerId, name, peers);
+//   res.send({ msg: 'success' })
+// })
 
 app.post(prefixPath + 'note-change', (req, res) => {
   const { pathname, data } = req.body
