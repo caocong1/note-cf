@@ -14,6 +14,7 @@ import ScreenShareButton from '../Screen/components/ScreenShareButton'
 import { pageLoadingAtom, componentAtom } from './atom'
 import { showAlertAtom } from '../Screen/atom'
 import { useAppProps } from 'antd/es/app/context'
+import { util } from 'peerjs'
 
 const badgeStatus: Record<string, PresetStatusColorType> = {
   connected: 'success',
@@ -39,7 +40,7 @@ const Layout: React.FC = () => {
     initPeer()
   }, [])
 
-  return (
+  return util.supports.data && util.supports.audioVideo ? (
     <Spin spinning={pageLoading}>
       <div style={{ width: '100dvw', height: '100dvh' }}>
         <div style={{ display: component === 'note' ? 'block' : 'none' }}>
@@ -137,6 +138,8 @@ const Layout: React.FC = () => {
         </div>
       </div>
     </Spin>
+  ) : (
+    <div>该浏览器不支持WEBRTC</div>
   )
 }
 
