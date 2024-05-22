@@ -3,7 +3,7 @@ import { useAtom, useAtomValue } from 'jotai'
 import { myNameAtom, myPeerIdAtom, peersAtom } from '@/atom'
 import { sendDataToPeers } from '@/utils/peer'
 import { filesAtom } from './atom'
-import { getFilesRecursively } from './util'
+import { createFileWritable, getFilesRecursively } from './util'
 import { notification } from '../Layout/Layout'
 
 const File: React.FC = () => {
@@ -205,7 +205,7 @@ const File: React.FC = () => {
                       下载
                     </Button>
                   )}
-                {/* {record.peerId !== myPeerId &&
+                {record.peerId !== myPeerId &&
                   !record.downloading &&
                   record.type === 'directory' && (
                     <Button
@@ -253,7 +253,7 @@ const File: React.FC = () => {
                     >
                       下载
                     </Button>
-                  )} */}
+                  )}
                 {record.downloading && record.type === 'file' && (
                   <Progress
                     percent={Math.floor(
