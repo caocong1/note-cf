@@ -36,25 +36,26 @@ export let peer: Peer
 
 export function initPeer() {
   const myPeerId = store.get(myPeerIdAtom)
-  peer = new Peer(myPeerId)
-  // peer = new Peer(myPeerId, {
-  //   host: import.meta.env.VITE_HOST || location.hostname,
-  //   port: import.meta.env.VITE_PORT || location.port,
-  //   secure: import.meta.env.VITE_SECURE
-  //     ? import.meta.env.VITE_SECURE === 'true'
-  //     : location.protocol === 'https:',
-  //   path: import.meta.env.VITE_PEER_PATH + 'peerjs',
-  //   config: {
-  //     iceServers: [
-  //       { urls: 'stun:freestun.net:5350' },
-  //       { urls: 'stun:stun.cloudflare.com:3478' },
-  //       { urls: 'stun:stun.l.google.com:19302' },
-  //     ],
-  //   },
-  // })
+  // peer = new Peer(myPeerId)
+  peer = new Peer(myPeerId, {
+    host: import.meta.env.VITE_HOST || location.hostname,
+    port: import.meta.env.VITE_PORT || location.port,
+    secure: import.meta.env.VITE_SECURE
+      ? import.meta.env.VITE_SECURE === 'true'
+      : location.protocol === 'https:',
+    path: import.meta.env.VITE_PEER_PATH + 'peerjs',
+    config: {
+      iceServers: [
+        { urls: 'stun:freestun.net:5350' },
+        { urls: 'stun:stun.cloudflare.com:3478' },
+        { urls: 'stun:stun.l.google.com:19302' },
+      ],
+    },
+  })
 
   peer.on('open', function (id) {
     console.log('My peer ID is: ' + id)
+    store.set(myPeerIdAtom, id)
     const name = store.get(myNameAtom)
     request('add-peer', { pathname: roomName, peerId: id, name }).then(
       (res) => {
