@@ -294,6 +294,11 @@ function connInit(conn: DataConnection) {
   })
   conn.on('iceStateChanged', (e) => {
     console.log('conn iceStateChanged', e)
+    if (e === 'disconnected') {
+      notification.error({ message: 'ICE连接断开：' + conn.peer })
+      const c = peer.connect(conn.peer)
+      connInit(c)
+    }
   })
 }
 function peerData(
