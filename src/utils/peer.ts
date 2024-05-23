@@ -292,6 +292,9 @@ function connInit(conn: DataConnection) {
       resetVideo()
     }
   })
+  conn.on('iceStateChanged', (e) => {
+    console.log('conn iceStateChanged', e)
+  })
 }
 function peerData(
   { name, peers, note, files, board }: any,
