@@ -1,27 +1,15 @@
 import { Button, Input, InputRef, Modal } from 'antd'
-import { useAtomValue, useSetAtom } from 'jotai'
-import { myPeerIdAtom } from '../../../atom'
 import { useCallback, useEffect, useRef, useState } from 'react'
-import { initPeer } from '../../../utils/peer'
+import { connectToPeer } from '../../../utils/peer'
 import { notification } from '../Layout'
-import { pageLoadingAtom } from '../atom'
 
-const ChangeName: React.FC = () => {
-  const myPeerId = useAtomValue(myPeerIdAtom)
-  const setPageLoading = useSetAtom(pageLoadingAtom)
+const ConnectPeer: React.FC = () => {
   const [open, setOpen] = useState(false)
   const [value, setValue] = useState('')
-  const mustChangeName = myPeerId === ''
-  if (mustChangeName) {
-    document.body.style.pointerEvents = 'none'
-  } else {
-    document.body.style.pointerEvents = 'auto'
-  }
 
-  const doChangeName = useCallback((name: string) => {
+  const doConnect = useCallback((name: string) => {
     setOpen(false)
-    setPageLoading(true)
-    initPeer(name)
+    connectToPeer(name)
   }, [])
   const inputRef = useRef<InputRef>(null)
   useEffect(() => {
@@ -36,23 +24,20 @@ const ChangeName: React.FC = () => {
 
   return (
     <>
-      <div
-        style={{ cursor: 'pointer', color: '#1565c0' }}
+      <Button
+        size="small"
         onClick={() => {
           setOpen(true)
         }}
       >
-        {myPeerId}
-      </div>
+        连接
+      </Button>
       <Modal
-        open={open || mustChangeName}
+        open={open}
         onCancel={() => {
           setOpen(false)
         }}
-        closable={!mustChangeName}
-        // mask={true}
-        // maskClosable={false}
-        title={mustChangeName ? '设置昵称' : '修改昵称'}
+        title={'连接用户'}
         footer={
           <Button
             onClick={() => {
@@ -60,7 +45,7 @@ const ChangeName: React.FC = () => {
                 notification.error({ message: '昵称不能为空' })
                 return
               }
-              doChangeName(value)
+              doConnect(value)
             }}
           >
             确定
@@ -76,7 +61,7 @@ const ChangeName: React.FC = () => {
           }}
           onKeyDown={(e: any) => {
             if (e.key === 'Enter' && e.target.value !== '') {
-              doChangeName(e.target.value)
+              doConnect(e.target.value)
             }
           }}
         />
@@ -84,4 +69,5 @@ const ChangeName: React.FC = () => {
     </>
   )
 }
-export default ChangeName
+
+export default ConnectPeer

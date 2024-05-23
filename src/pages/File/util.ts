@@ -17,13 +17,14 @@ export async function requestDownload(data: any) {
   const files = store.get(filesAtom)
   const fileData = files.find((f) => f.id === fileId)
   const peers = store.get(peersAtom)
-  const peer = peers.find((p) => p.peerId === conn.peer)
-  if (!peer) {
+  const p = peers.find((p) => p.peerId === conn.peer)
+  if (!p || !fileData) {
+    console.log('peer or file not found', p, fileData)
     return
   }
   if (fileData.type === 'file' && fileData.fileHandle) {
     notification.success({
-      message: `< ${peer.name} >开始下载文件[ ${fileData.name} ]`,
+      message: `< ${p.peerId} >开始下载文件[ ${fileData.name} ]`,
     })
     const file = await fileData.fileHandle.getFile()
     conn.send({
@@ -51,6 +52,9 @@ export async function requestDownload(data: any) {
       sendBuffer = buffer.slice(start, end)
     }
   } else if (fileData.type === 'file' && fileData.file) {
+    notification.success({
+      message: `< ${p.peerId} >开始下载文件[ ${fileData.name} ]`,
+    })
     const { file } = fileData
     conn.send({
       type: 'send-file-start',
@@ -82,7 +86,7 @@ export async function requestDownload(data: any) {
     fileData.subFiles?.length
   ) {
     notification.success({
-      message: `< ${peer.name} >开始下载文件夹[ ${fileData.name} ]`,
+      message: `< ${p.peerId} >开始下载文件夹[ ${fileData.name} ]`,
     })
     // const files = fileData.subFiles.map((fh: any) => ({
     //   name: fh.name,

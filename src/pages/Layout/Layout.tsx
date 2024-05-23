@@ -1,6 +1,6 @@
 import React, { useEffect, useLayoutEffect, useState } from 'react'
 import { useAtom, useAtomValue, useSetAtom } from 'jotai'
-import { myNameAtom, myPeerIdAtom, peersAtom, store } from '../../atom'
+import { myPeerIdAtom, peersAtom, store } from '../../atom'
 import { App, Badge, Dropdown, Radio, Spin, Tag, Tooltip } from 'antd'
 import { initPeer, roomName } from '../../utils/peer'
 import { PresetStatusColorType } from 'antd/es/_util/colors'
@@ -15,6 +15,7 @@ import { componentAtom, pageLoadingAtom } from './atom'
 import { showAlertAtom } from '../Screen/atom'
 import { useAppProps } from 'antd/es/app/context'
 import { util } from 'peerjs'
+import ConnectPeer from './components/ConnectPeer'
 
 const badgeStatus: Record<string, PresetStatusColorType> = {
   connected: 'success',
@@ -29,7 +30,6 @@ const Layout: React.FC = () => {
   const peers = useAtomValue(peersAtom)
   const [component, setComponent] = useAtom(componentAtom)
   const myPeerId = useAtomValue(myPeerIdAtom)
-  const myName = useAtomValue(myNameAtom)
   const setShowAlert = useSetAtom(showAlertAtom)
   const pageLoading = useAtomValue(pageLoadingAtom)
   const [showTip, setShowTip] = useState(true)
@@ -39,15 +39,16 @@ const Layout: React.FC = () => {
   notification = app.notification
 
   useLayoutEffect(() => {
-    initPeer()
+    const myPeerId = store.get(myPeerIdAtom)
+    if (myPeerId) initPeer(myPeerId)
   }, [])
 
   useEffect(() => {
     document.addEventListener('click', closeTip)
     function closeTip() {
       const pageLoading = store.get(pageLoadingAtom)
-      const myName = store.get(myNameAtom)
-      if (pageLoading || myName === 'unknown') return
+      const myPeerId = store.get(myPeerIdAtom)
+      if (pageLoading || !myPeerId) return
       setShowTip(false)
     }
     return () => {
@@ -97,14 +98,14 @@ const Layout: React.FC = () => {
             <ChangeName />
             <Tooltip
               title="点击复制邀请地址"
-              open={showTip && !pageLoading && myName !== 'unknown'}
+              open={showTip && !pageLoading && !!myPeerId}
             >
               <Dropdown
                 menu={{
                   items: peers
-                    .filter((peer) => peer.peerId !== myPeerId)
-                    .map((peer) => ({
-                      key: peer.peerId,
+                    .filter((p) => p.peerId !== myPeerId)
+                    .map((p) => ({
+                      key: p.peerId,
                       label: (
                         <div
                           style={{
@@ -112,10 +113,10 @@ const Layout: React.FC = () => {
                             gap: 8,
                           }}
                         >
-                          <Badge status={badgeStatus[peer.status]} />
+                          <Badge status={badgeStatus[p.status]} />
                           <div>
-                            {peer.name}
-                            {peer.status === 'self' && '(me)'}
+                            {p.peerId}
+                            {p.status === 'self' && '(me)'}
                           </div>
                         </div>
                       ),
@@ -157,6 +158,7 @@ const Layout: React.FC = () => {
                 </Badge>
               </Dropdown>
             </Tooltip>
+            <ConnectPeer />
           </div>
           <div>
             <Radio.Group

@@ -1,6 +1,6 @@
 import { Button, Progress, Table, Upload } from 'antd'
 import { useAtom, useAtomValue } from 'jotai'
-import { myNameAtom, myPeerIdAtom, peersAtom } from '@/atom'
+import { myPeerIdAtom, peersAtom } from '@/atom'
 import { sendDataToPeers } from '@/utils/peer'
 import { filesAtom } from './atom'
 import { createFileWritable, getFilesRecursively } from './util'
@@ -8,7 +8,6 @@ import { notification } from '../Layout/Layout'
 
 const File: React.FC = () => {
   const [files, setFiles] = useAtom(filesAtom)
-  const myName = useAtomValue(myNameAtom)
   const peers = useAtomValue(peersAtom)
   const myPeerId = useAtomValue(myPeerIdAtom)
 
@@ -40,7 +39,7 @@ const File: React.FC = () => {
                 name: fileHandle.name,
                 type: fileHandle.kind,
                 fileHandle,
-                user: myName,
+                user: myPeerId,
                 peerId: myPeerId,
               }
               setFiles((o) => [...o, file])
@@ -61,7 +60,7 @@ const File: React.FC = () => {
                 type: 'file',
                 file,
                 contentType: file.type,
-                user: myName,
+                user: myPeerId,
                 peerId: myPeerId,
               }
               setFiles((o) => [...o, fileData])
@@ -97,7 +96,7 @@ const File: React.FC = () => {
                 type: dirHandle.kind,
                 dirHandle,
                 subFiles,
-                user: myName,
+                user: myPeerId,
                 peerId: myPeerId,
               }
               setFiles((o) => [...o, file])

@@ -7,14 +7,12 @@ type PeerStatus = 'connectting' | 'connected' | 'self'
 
 export interface PeerData {
   peerId: string
-  name: string
   conn: DataConnection
   board?: CanvasPath[]
 }
 
 class PeerConnection {
   peerId: string
-  name: string
   status: PeerStatus
   conn: DataConnection
   board?: CanvasPath[]
@@ -22,7 +20,6 @@ class PeerConnection {
   constructor(data: PeerData) {
     // console.log("PeerConnection created", data);
     this.peerId = data.peerId
-    this.name = data.name
     this.conn = data.conn
     if (this.peerId === peer.id) {
       this.status = 'self'
@@ -44,18 +41,18 @@ class PeerConnection {
     // }
   }
 
-  setName(name: string) {
-    store.set(peersAtom, (old) => {
-      //   console.log("store set old", old);
-      return old.map((peer: PeerConnection) => {
-        // console.log("setName", name, peer, this.peerId);
-        if (peer.peerId === this.peerId) {
-          peer.name = name
-        }
-        return peer
-      })
-    })
-  }
+  // setName(name: string) {
+  //   store.set(peersAtom, (old) => {
+  //     //   console.log("store set old", old);
+  //     return old.map((peer: PeerConnection) => {
+  //       // console.log("setName", name, peer, this.peerId);
+  //       if (peer.peerId === this.peerId) {
+  //         peer.name = name
+  //       }
+  //       return peer
+  //     })
+  //   })
+  // }
 
   setStatus(status: PeerStatus) {
     store.set(peersAtom, (old) =>

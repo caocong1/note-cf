@@ -1,5 +1,5 @@
 import Peer, { DataConnection } from 'peerjs'
-import { myNameAtom, myPeerIdAtom, peersAtom, store } from '../atom'
+import { myPeerIdAtom, peersAtom, store } from '../atom'
 import PeerConnection, { PeerData } from './PeerConnection'
 import { remoteStreamDataAtom, streamingDataAtom } from '../pages/Screen/atom'
 import { componentAtom, pageLoadingAtom } from '../pages/Layout/atom'
@@ -17,7 +17,6 @@ import {
   screenJsonAddToBoard,
   stopScreen,
 } from '@/pages/Screen/util'
-import { remotePeerNameChanged } from '@/pages/Layout/util'
 import {
   addFile,
   downloadFile,
@@ -34,10 +33,13 @@ export const roomName = decodeURI(location.pathname)
 export let peer: Peer
 const iceUsername = import.meta.env.VITE_ICEUSERNAME
 const iceCredential = import.meta.env.VITE_ICECREDENTIAL
-export function initPeer() {
-  const myPeerId = store.get(myPeerIdAtom)
+export function initPeer(myPeerId: string) {
+  // const myPeerId = store.get(myPeerIdAtom)
+  if (peer) {
+    peer.destroy()
+  }
   peer = new Peer(myPeerId, {
-    debug: 3,
+    debug: 0,
     config: {
       iceServers: [
         {
@@ -161,13 +163,12 @@ export function initPeer() {
           const p = peers.find((p) => p.peerId === call.peer)
           const newStreamData = {
             id: call.peer,
-            name: p?.name,
             stream: remoteStream,
           }
           if (p) {
             modal.confirm({
               title: '提示',
-              content: `是否接收来自< ${p?.name} >的屏幕共享`,
+              content: `是否接收来自< ${call.peer} >的屏幕共享`,
               onOk() {
                 store.set(componentAtom, 'screen')
                 playVideo(newStreamData)
@@ -181,19 +182,24 @@ export function initPeer() {
   })
 
   peer.on('error', function (e) {
-    console.error(e)
+    console.error(e, peer.id, myPeerId)
     if (e.message.includes('is taken')) {
-      modal.confirm({
-        title: '提示',
-        content: '同一浏览器只能开一个Note窗口',
-        onOk() {
-          window.close()
-        },
-        onCancel() {
-          window.close()
-        },
-        closable: false,
-      })
+      if (myPeerId === peer.id) {
+        notification.error({ message: '昵称已被占用' })
+        store.set(pageLoadingAtom, false)
+      } else {
+        modal.confirm({
+          title: '提示',
+          content: '同一浏览器只能开一个Note窗口',
+          onOk() {
+            window.close()
+          },
+          onCancel() {
+            window.close()
+          },
+          closable: false,
+        })
+      }
     } else {
       notification.error({ message: 'Peer连接失败请重试，msg: ' + e.message })
     }
@@ -201,12 +207,12 @@ export function initPeer() {
 }
 
 function connInit(conn: DataConnection) {
-  console.log('conn init', conn, conn.open)
+  // console.log('conn init', conn, conn.open)
   conn.on('open', () => {
     console.log('connect open', conn)
     conn.send({
       type: 'get-peer-data',
-      data: { roomName, name: store.get(myNameAtom) },
+      data: { roomName },
     })
     // store.set(peersAtom, (old) =>
     //   old.map((peer: PeerConnection) => {
@@ -225,7 +231,7 @@ function connInit(conn: DataConnection) {
     // this.setStatus("connected");
   })
   conn.on('data', (res: any) => {
-    console.log('conn data', conn.peer, res)
+    console.log('conn data', conn.peer, res?.type)
     const { type, data } = res
     //   console.log("conn data", this.peerId, type, data);
     switch (type) {
@@ -234,22 +240,21 @@ function connInit(conn: DataConnection) {
           conn.send({
             type: 'peer-data',
             data: {
-              name: store.get(myNameAtom),
               peers: store.get(peersAtom).map((p) => p.peerId),
               note: document.getElementById('content')?.innerHTML,
               files: store.get(filesAtom),
               board: getBoardObjectsJson(),
             },
           })
-          addNewPeer({ peerId: conn.peer, name: data.name, conn })
+          addNewPeer({ peerId: conn.peer, conn })
         }
         break
       case 'peer-data':
         peerData(data, conn)
         break
-      case 'change-name':
-        remotePeerNameChanged(data)
-        break
+      // case 'change-name':
+      //   remotePeerNameChanged(data)
+      //   break
       case 'note-change':
         noteChange(data)
         break
@@ -331,19 +336,24 @@ function connInit(conn: DataConnection) {
   })
 }
 function peerData(
-  { name, peers, note, files, board }: any,
+  {
+    peers,
+    note,
+    files,
+    board,
+  }: { peers: string[]; note: string; files: any[]; board: any[] },
   conn: DataConnection,
 ) {
-  addNewPeer({ peerId: conn.peer, name, conn })
-  store.set(remoteStreamDataAtom, (o) => {
-    const sIndex = o.findIndex((v) => v.id === conn.peer)
-    if (sIndex !== -1) {
-      o[sIndex].name = name
-      return [...o]
-    } else {
-      return o
-    }
-  })
+  addNewPeer({ peerId: conn.peer, conn })
+  // store.set(remoteStreamDataAtom, (o) => {
+  //   const sIndex = o.findIndex((v) => v.id === conn.peer)
+  //   if (sIndex !== -1) {
+  //     o[sIndex].name = name
+  //     return [...o]
+  //   } else {
+  //     return o
+  //   }
+  // })
   connectIds(peers)
   const contentNode = document.getElementById('content')
   const nodeHtml = contentNode?.innerHTML
@@ -387,7 +397,7 @@ function addNewPeer(res: PeerData) {
     if (isExist) {
       return old
     } else {
-      notification.success({ message: `成功连接< ${res.name} >` })
+      notification.success({ message: `成功连接< ${res.peerId} >` })
       return [...old, new PeerConnection(res)]
     }
   })
@@ -506,9 +516,9 @@ export function callToPeers(stream: any) {
 
 function removePeer(peerId: string) {
   store.set(peersAtom, (old) => {
-    const peer = old.find((peer: PeerConnection) => peer.peerId === peerId)
-    if (peer?.status === 'connected') {
-      notification.info({ message: `< ${peer.name} >离开房间` })
+    const p = old.find((peer: PeerConnection) => peer.peerId === peerId)
+    if (p?.status === 'connected') {
+      notification.info({ message: `< ${p.peerId} >离开房间` })
     }
     return old.filter((peer: PeerConnection) => peer.peerId !== peerId)
   })
@@ -520,23 +530,25 @@ window.addEventListener('beforeunload', () => {
 })
 
 function addFileNotice(data: any, peerId: string) {
-  const peer = store.get(peersAtom).find((p) => p.peerId === peerId)
-  if (peer)
-    notification.success({
-      message: `< ${peer.name} >分享了文件${
-        data.type === 'directory' ? '夹' : ''
-      }[ ${data.name} ]`,
-    })
+  notification.success({
+    message: `< ${peerId} >分享了文件${
+      data.type === 'directory' ? '夹' : ''
+    }[ ${data.name} ]`,
+  })
 }
 
 function downloadComplete(data: { fileId: string; peerId: string }) {
-  const peer = store.get(peersAtom).find((p) => p.peerId === data.peerId)
   const fileData = store.get(filesAtom).find((f) => f.id === data.fileId)
-  if (peer && fileData) {
+  if (fileData) {
     notification.success({
-      message: `< ${peer.name} >下载文件${
+      message: `< ${data.peerId} >下载文件${
         fileData.type === 'directory' ? '夹' : ''
       }[ ${fileData.name} ]完成`,
     })
   }
+}
+
+export function connectToPeer(peerId: string) {
+  const c = peer.connect(peerId)
+  connInit(c)
 }

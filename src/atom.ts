@@ -6,13 +6,13 @@ export const store = createStore()
 
 export const myPeerIdAtom = atomWithStorage(
   'myPeerId',
-  localStorage.getItem('myPeerId')?.replace(/"/g, '') || crypto.randomUUID(),
+  localStorage.getItem('myPeerId')?.replace(/"/g, '') || '',
 )
 
-export const myNameAtom = atomWithStorage(
-  'myName',
-  localStorage.getItem('myName')?.replace(/"/g, '') || 'unknown',
-)
+// export const myNameAtom = atomWithStorage(
+//   'myName',
+//   localStorage.getItem('myName')?.replace(/"/g, '') || 'unknown',
+// )
 
 export const peersAtom = atom<
   PeerConnection[],
