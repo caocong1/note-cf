@@ -33,11 +33,39 @@ import { filesAtom } from '@/pages/File/atom'
 export const roomName = decodeURI(location.pathname)
 
 export let peer: Peer
-
+const iceUsername = import.meta.env.VITE_ICEUSERNAME
+const iceCredential = import.meta.env.VITE_ICECREDENTIAL
 export function initPeer() {
   const myPeerId = store.get(myPeerIdAtom)
   peer = new Peer(myPeerId, {
     debug: 3,
+    config: {
+      iceServers: [
+        {
+          urls: 'stun:stun.relay.metered.ca:80',
+        },
+        {
+          urls: 'turn:global.relay.metered.ca:80',
+          username: iceUsername,
+          credential: iceCredential,
+        },
+        {
+          urls: 'turn:global.relay.metered.ca:80?transport=tcp',
+          username: iceUsername,
+          credential: iceCredential,
+        },
+        {
+          urls: 'turn:global.relay.metered.ca:443',
+          username: iceUsername,
+          credential: iceCredential,
+        },
+        {
+          urls: 'turns:global.relay.metered.ca:443?transport=tcp',
+          username: iceUsername,
+          credential: iceCredential,
+        },
+      ],
+    },
   })
   // peer = new Peer(myPeerId, {
   //   host: import.meta.env.VITE_HOST || location.hostname,
@@ -296,8 +324,10 @@ function connInit(conn: DataConnection) {
     console.log('conn iceStateChanged', e)
     if (e === 'disconnected') {
       notification.error({ message: 'ICE连接断开：' + conn.peer })
-      const c = peer.connect(conn.peer)
-      connInit(c)
+      peer.connect(conn.peer)
+      // conn.close()
+      // const c = peer.connect(conn.peer)
+      // connInit(c)
     }
   })
 }
