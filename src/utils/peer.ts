@@ -478,7 +478,9 @@ function addFileNotice(data: any, peerId: string) {
   const peer = store.get(peersAtom).find((p) => p.peerId === peerId)
   if (peer)
     notification.success({
-      message: `< ${peer.name} >分享了文件${data.type === 'directory' ? '夹' : ''}[ ${data.name} ]`,
+      message: `< ${peer.name} >分享了文件${
+        data.type === 'directory' ? '夹' : ''
+      }[ ${data.name} ]`,
     })
 }
 
@@ -487,7 +489,9 @@ function downloadComplete(data: { fileId: string; peerId: string }) {
   const fileData = store.get(filesAtom).find((f) => f.id === data.fileId)
   if (peer && fileData) {
     notification.success({
-      message: `< ${peer.name} >下载文件${fileData.type === 'directory' ? '夹' : ''}[ ${fileData.name} ]完成`,
+      message: `< ${peer.name} >下载文件${
+        fileData.type === 'directory' ? '夹' : ''
+      }[ ${fileData.name} ]完成`,
     })
   }
 }

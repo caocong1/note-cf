@@ -14,15 +14,16 @@ export const myNameAtom = atomWithStorage(
   localStorage.getItem('myName')?.replace(/"/g, '') || 'unknown',
 )
 
-export const peersAtom = atom<PeerConnection[], [PeerConnection[]], void>(
-  [],
-  (get, set, arg: any) => {
-    const data: PeerConnection[] =
-      typeof arg === 'function' ? arg(get(peersAtom)) : arg
-    sessionStorage.setItem('peerIds', data.map((p) => p.peerId).join(','))
-    set(peersAtom, data)
-  },
-)
+export const peersAtom = atom<
+  PeerConnection[],
+  [PeerConnection[] | ((p: PeerConnection[]) => PeerConnection[])],
+  void
+>([], (get, set, arg: any) => {
+  const data: PeerConnection[] =
+    typeof arg === 'function' ? arg(get(peersAtom)) : arg
+  sessionStorage.setItem('peerIds', data.map((p) => p.peerId).join(','))
+  set(peersAtom, data)
+})
 
 // setInterval(() => {
 //   const peers = store.get(peersAtom)

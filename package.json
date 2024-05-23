@@ -6,15 +6,11 @@
   "scripts": {
     "d": "vite",
     "build": "tsc && vite build",
-    "build-41": "tsc && vite build --mode 41",
-    "build-prod": "tsc && vite build --mode production",
     "lint": "eslint . --ext ts,tsx --report-unused-disable-directives --max-warnings 0",
     "preview": "vite preview",
     "prettier": "prettier . --write",
     "eslint": "eslint --fix .",
-    "l": "prettier . --write && tsc && eslint --fix .",
-    "serve-dev": "node --env-file=.env.development express.js",
-    "serve-41": "node --env-file=.env.41 express.js"
+    "l": "prettier . --write && tsc && eslint --fix ."
   },
   "dependencies": {
     "@ant-design/icons": "^5.3.7",
