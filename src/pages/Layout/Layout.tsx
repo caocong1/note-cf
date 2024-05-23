@@ -1,6 +1,6 @@
 import React, { useEffect, useLayoutEffect, useState } from 'react'
 import { useAtom, useAtomValue, useSetAtom } from 'jotai'
-import { myPeerIdAtom, peersAtom, store } from '../../atom'
+import { myNameAtom, myPeerIdAtom, peersAtom, store } from '../../atom'
 import { App, Badge, Dropdown, Radio, Spin, Tag, Tooltip } from 'antd'
 import { initPeer, roomName } from '../../utils/peer'
 import { PresetStatusColorType } from 'antd/es/_util/colors'
@@ -29,6 +29,7 @@ const Layout: React.FC = () => {
   const peers = useAtomValue(peersAtom)
   const [component, setComponent] = useAtom(componentAtom)
   const myPeerId = useAtomValue(myPeerIdAtom)
+  const myName = useAtomValue(myNameAtom)
   const setShowAlert = useSetAtom(showAlertAtom)
   const pageLoading = useAtomValue(pageLoadingAtom)
   const [showTip, setShowTip] = useState(true)
@@ -45,7 +46,8 @@ const Layout: React.FC = () => {
     document.addEventListener('click', closeTip)
     function closeTip() {
       const pageLoading = store.get(pageLoadingAtom)
-      if (pageLoading) return
+      const myName = store.get(myNameAtom)
+      if (pageLoading || myName === 'unknown') return
       setShowTip(false)
     }
     return () => {
@@ -84,41 +86,44 @@ const Layout: React.FC = () => {
             background: '#fff',
           }}
         >
-          <Dropdown
-            menu={{
-              items: peers
-                .filter((peer) => peer.peerId !== myPeerId)
-                .map((peer) => ({
-                  key: peer.peerId,
-                  label: (
-                    <div
-                      style={{
-                        display: 'flex',
-                        gap: 8,
-                      }}
-                    >
-                      <Badge status={badgeStatus[peer.status]} />
-                      <div>
-                        {peer.name}
-                        {peer.status === 'self' && '(me)'}
-                      </div>
-                    </div>
-                  ),
-                })),
+          <div
+            style={{
+              display: 'flex',
+              gap: 16,
+              alignItems: 'baseline',
+              cursor: 'pointer',
             }}
-            placement="topLeft"
-            arrow
           >
-            <div
-              style={{
-                display: 'flex',
-                gap: 16,
-                alignItems: 'baseline',
-                cursor: 'pointer',
-              }}
+            <ChangeName />
+            <Tooltip
+              title="点击复制邀请地址"
+              open={showTip && !pageLoading && myName !== 'unknown'}
             >
-              <ChangeName />
-              <Tooltip title="点击复制邀请地址" open={showTip && !pageLoading}>
+              <Dropdown
+                menu={{
+                  items: peers
+                    .filter((peer) => peer.peerId !== myPeerId)
+                    .map((peer) => ({
+                      key: peer.peerId,
+                      label: (
+                        <div
+                          style={{
+                            display: 'flex',
+                            gap: 8,
+                          }}
+                        >
+                          <Badge status={badgeStatus[peer.status]} />
+                          <div>
+                            {peer.name}
+                            {peer.status === 'self' && '(me)'}
+                          </div>
+                        </div>
+                      ),
+                    })),
+                }}
+                placement="topLeft"
+                arrow
+              >
                 <Badge count={peers.length} color="blue">
                   <Tag
                     color="purple"
@@ -150,9 +155,9 @@ const Layout: React.FC = () => {
                     {roomName === '/' ? '<public>' : roomName.slice(1)}
                   </Tag>
                 </Badge>
-              </Tooltip>
-            </div>
-          </Dropdown>
+              </Dropdown>
+            </Tooltip>
+          </div>
           <div>
             <Radio.Group
               size="small"

@@ -11,6 +11,11 @@ const ChangeName: React.FC = () => {
   const [open, setOpen] = useState(false)
   const [value, setValue] = useState('')
   const mustChangeName = myName === 'unknown'
+  if (mustChangeName) {
+    document.body.style.pointerEvents = 'none'
+  } else {
+    document.body.style.pointerEvents = 'auto'
+  }
   const myPeerId = useAtomValue(myPeerIdAtom)
 
   const doChangeName = useCallback(
@@ -67,6 +72,8 @@ const ChangeName: React.FC = () => {
           setOpen(false)
         }}
         closable={!mustChangeName}
+        // mask={true}
+        // maskClosable={false}
         title={mustChangeName ? '设置昵称' : '修改昵称'}
         footer={
           <Button
