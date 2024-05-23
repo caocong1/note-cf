@@ -168,19 +168,20 @@ const File: React.FC = () => {
                           (p) => p.peerId === record.peerId,
                         )
                         if (peer) {
-                          // if ((window as any).showSaveFilePicker) {
-                          const fileHandle = await (
-                            window as any
-                          ).showSaveFilePicker({ suggestedName: record.name })
-                          const writable = await fileHandle.createWritable()
-                          setFiles((o) =>
-                            o.map((f) => {
-                              if (f.id === record.id) {
-                                return { ...f, writable }
-                              }
-                              return f
-                            }),
-                          )
+                          if ((window as any).showSaveFilePicker) {
+                            const fileHandle = await (
+                              window as any
+                            ).showSaveFilePicker({ suggestedName: record.name })
+                            const writable = await fileHandle.createWritable()
+                            setFiles((o) =>
+                              o.map((f) => {
+                                if (f.id === record.id) {
+                                  return { ...f, writable }
+                                }
+                                return f
+                              }),
+                            )
+                          }
                           peer.conn?.send({
                             type: 'request-download',
                             data: record.id,
