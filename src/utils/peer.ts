@@ -36,7 +36,9 @@ export let peer: Peer
 
 export function initPeer() {
   const myPeerId = store.get(myPeerIdAtom)
-  peer = new Peer(myPeerId)
+  peer = new Peer(myPeerId, {
+    debug: 3,
+  })
   // peer = new Peer(myPeerId, {
   //   host: import.meta.env.VITE_HOST || location.hostname,
   //   port: import.meta.env.VITE_PORT || location.port,
@@ -167,7 +169,7 @@ export function initPeer() {
 }
 
 function connInit(conn: DataConnection) {
-  console.log('conn init', conn)
+  console.log('conn init', conn, conn.open)
   conn.on('open', () => {
     console.log('connect open', conn)
     conn.send({
