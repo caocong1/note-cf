@@ -1,5 +1,4 @@
-import request from '@/request'
-import { roomName, sendDataToPeers } from '@/utils/peer'
+import { sendDataToPeers } from '@/utils/peer'
 import { Canvas, PencilBrush, Point, util } from 'fabric'
 
 export let canvas: Canvas
@@ -21,13 +20,17 @@ export function removeBoardObject(data: any) {
   removeObject && canvas.remove(removeObject)
 }
 
-export function saveBoard() {
-  const objects = canvas.getObjects()
-  request('board-change', {
-    pathname: roomName,
-    boardPaths: objects.map((o: any) => ({ ...o.toJSON(), id: o.id })),
-  })
+export function getBoardObjectsJson() {
+  return canvas?.getObjects()?.map((o: any) => ({ ...o.toJSON(), id: o.id }))
 }
+
+// export function saveBoard() {
+//   const objects = canvas.getObjects()
+//   request('board-change', {
+//     pathname: roomName,
+//     boardPaths: objects.map((o: any) => ({ ...o.toJSON(), id: o.id })),
+//   })
+// }
 export function initBoardCanvas(canvasRef: React.RefObject<HTMLCanvasElement>) {
   canvas = new Canvas(canvasRef.current!, {
     isDrawingMode: true,
@@ -48,7 +51,7 @@ export function initBoardCanvas(canvasRef: React.RefObject<HTMLCanvasElement>) {
 
     const json = newPath.toJSON()
     sendDataToPeers({ type: 'board-object-add', data: { ...json, id } })
-    saveBoard()
+    // saveBoard()
   })
   canvas.on('mouse:wheel', (opt) => {
     const delta = opt.e.deltaY // 滚轮，向上滚一下是 -100，向下滚一下是 100
@@ -80,7 +83,7 @@ export function initBoardCanvas(canvasRef: React.RefObject<HTMLCanvasElement>) {
       // console.log(e.target, canvas.getObjects());
       canvas.remove(e.target)
       sendDataToPeers({ type: 'board-object-remove', data: e.target.id })
-      saveBoard()
+      // saveBoard()
     }
   })
   canvas.on('mouse:move', (e) => {
@@ -95,5 +98,5 @@ export function initBoardCanvas(canvasRef: React.RefObject<HTMLCanvasElement>) {
 
 export function clearBoard() {
   canvas.clear()
-  saveBoard()
+  // saveBoard()
 }

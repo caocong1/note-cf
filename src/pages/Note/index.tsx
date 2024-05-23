@@ -1,5 +1,4 @@
-import { roomName, sendDataToPeers } from '../../utils/peer'
-import request from '../../request'
+import { sendDataToPeers } from '../../utils/peer'
 
 const Note: React.FC = () => {
   return (
@@ -15,10 +14,10 @@ const Note: React.FC = () => {
       }}
       onInput={(e: any) => {
         sendDataToPeers({ type: 'note-change', data: e.target.innerHTML })
-        request('note-change', {
-          pathname: roomName,
-          data: e.target.innerHTML,
-        })
+        // request('note-change', {
+        //   pathname: roomName,
+        //   data: e.target.innerHTML,
+        // })
       }}
     />
   )

@@ -1,7 +1,7 @@
-import React, { useLayoutEffect } from 'react'
+import React, { useEffect, useLayoutEffect, useState } from 'react'
 import { useAtom, useAtomValue, useSetAtom } from 'jotai'
-import { myPeerIdAtom, peersAtom } from '../../atom'
-import { App, Badge, Dropdown, Radio, Spin, Tag } from 'antd'
+import { myPeerIdAtom, peersAtom, store } from '../../atom'
+import { App, Badge, Dropdown, Radio, Spin, Tag, Tooltip } from 'antd'
 import { initPeer, roomName } from '../../utils/peer'
 import { PresetStatusColorType } from 'antd/es/_util/colors'
 import ChangeName from './components/ChangeName'
@@ -11,7 +11,7 @@ import Board from '../Board'
 import File from '../File'
 import RemoteStreamBadge from '../Screen/components/RemoteStreamBadge'
 import ScreenShareButton from '../Screen/components/ScreenShareButton'
-import { pageLoadingAtom, componentAtom } from './atom'
+import { componentAtom, pageLoadingAtom } from './atom'
 import { showAlertAtom } from '../Screen/atom'
 import { useAppProps } from 'antd/es/app/context'
 import { util } from 'peerjs'
@@ -26,11 +26,12 @@ export let modal: useAppProps['modal']
 export let notification: useAppProps['notification']
 
 const Layout: React.FC = () => {
-  const pageLoading = useAtomValue(pageLoadingAtom)
   const peers = useAtomValue(peersAtom)
   const [component, setComponent] = useAtom(componentAtom)
   const myPeerId = useAtomValue(myPeerIdAtom)
   const setShowAlert = useSetAtom(showAlertAtom)
+  const pageLoading = useAtomValue(pageLoadingAtom)
+  const [showTip, setShowTip] = useState(true)
   const app = App.useApp()
   message = app.message
   modal = app.modal
@@ -40,8 +41,20 @@ const Layout: React.FC = () => {
     initPeer()
   }, [])
 
+  useEffect(() => {
+    document.addEventListener('click', closeTip)
+    function closeTip() {
+      const pageLoading = store.get(pageLoadingAtom)
+      if (pageLoading) return
+      setShowTip(false)
+    }
+    return () => {
+      document.removeEventListener('click', closeTip)
+    }
+  }, [])
+
   return util.supports.data && util.supports.audioVideo ? (
-    <Spin spinning={pageLoading}>
+    <Spin spinning={pageLoading} tip="PeerJS服务器连接中...">
       <div style={{ width: '100dvw', height: '100dvh' }}>
         <div style={{ display: component === 'note' ? 'block' : 'none' }}>
           <Note />
@@ -105,11 +118,39 @@ const Layout: React.FC = () => {
               }}
             >
               <ChangeName />
-              <Badge count={peers.length} color="blue">
-                <Tag color="purple">
-                  {roomName === '/' ? '<public>' : roomName.slice(1)}
-                </Tag>
-              </Badge>
+              <Tooltip title="点击复制邀请地址" open={showTip && !pageLoading}>
+                <Badge count={peers.length} color="blue">
+                  <Tag
+                    color="purple"
+                    onClick={() => {
+                      const inviteURL =
+                        location.origin +
+                        location.pathname +
+                        '?peerId=' +
+                        myPeerId
+                      if (navigator.clipboard) {
+                        navigator.clipboard.writeText(inviteURL).then(() => {
+                          notification.success({
+                            message: `已复制邀请地址:${inviteURL}`,
+                          })
+                        })
+                      } else {
+                        const input = document.createElement('input')
+                        input.value = inviteURL
+                        document.body.appendChild(input)
+                        input.select()
+                        document.execCommand('copy')
+                        document.body.removeChild(input)
+                        notification.success({
+                          message: `已复制邀请地址:${inviteURL}`,
+                        })
+                      }
+                    }}
+                  >
+                    {roomName === '/' ? '<public>' : roomName.slice(1)}
+                  </Tag>
+                </Badge>
+              </Tooltip>
             </div>
           </Dropdown>
           <div>
