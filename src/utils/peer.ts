@@ -167,6 +167,7 @@ export function initPeer() {
 }
 
 function connInit(conn: DataConnection) {
+  console.log('conn init', conn)
   conn.on('open', () => {
     console.log('connect open', conn)
     conn.send({
