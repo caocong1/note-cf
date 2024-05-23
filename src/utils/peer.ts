@@ -114,6 +114,11 @@ export function initPeer() {
     // }
   })
 
+  peer.on('disconnected', function (conn) {
+    console.log('peer disconnected', conn)
+    // notification.error({ message: 'Peer连接断开' })
+  })
+
   peer.on('call', function (call) {
     console.log('peer call', call)
     call.answer()
