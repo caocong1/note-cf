@@ -23,7 +23,6 @@ import {
   downloadFile,
   removeFile,
   requestDownload,
-  requestDownloadLegacy,
   startReceiveFile,
 } from '@/pages/File/util'
 import { noteChange } from '@/pages/Note/util'
@@ -273,9 +272,9 @@ function connInit(conn: DataConnection) {
       case 'request-download':
         requestDownload({ fileId: data, conn })
         break
-      case 'request-download-legacy':
-        requestDownloadLegacy({ fileId: data, conn })
-        break
+      // case 'request-download-legacy':
+      //   requestDownloadLegacy({ fileId: data, conn })
+      //   break
       case 'send-file-start':
         startReceiveFile(data)
         break
