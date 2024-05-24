@@ -1,4 +1,4 @@
-import { myPeerIdAtom, peersAtom, store } from '@/atom'
+import { myPeerIdAtom, store } from '@/atom'
 import { FabricImage, Canvas, Point, util, PencilBrush } from 'fabric'
 import {
   StreamData,
@@ -334,9 +334,7 @@ export function stopScreen(data: any) {
   if (peerId !== myPeerId) {
     store.set(remoteStreamDataAtom, (o) => o.filter((v) => v.id !== peerId))
     if (streamingData.id === peerId) {
-      const peers = store.get(peersAtom)
-      const peer = peers.find((p) => p.peerId === peerId)
-      notification.warning({ message: `< ${peer?.name} >停止共享屏幕` })
+      notification.warning({ message: `< ${peerId} >停止共享屏幕` })
       resetVideo()
     }
   }
