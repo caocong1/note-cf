@@ -57,31 +57,31 @@ export function initBoardCanvas(canvasRef: React.RefObject<HTMLCanvasElement>) {
     opt.e.preventDefault()
     opt.e.stopPropagation()
 
-    // if (opt.e.ctrlKey) {
-    //   console.log('pinch')
-    //   const delta = opt.e.deltaY
-    //   let zoom = canvas.getZoom()
-    //   zoom *= 0.999 ** delta
-    //   canvas.setZoom(zoom)
-    // } else {
-    //   const e = opt.e
-    //   const vpt = canvas.viewportTransform
-    //   vpt[4] += e.deltaX
-    //   vpt[5] += e.deltaY
-    //   canvas.requestRenderAll()
-    // }
-    const delta = opt.e.deltaY // 滚轮，向上滚一下是 -100，向下滚一下是 100
-    let zoom = canvas.getZoom() // 获取画布当前缩放值
-    zoom *= 0.996 ** delta
-    if (zoom > 20) zoom = 20 // 限制最大缩放级别
-    if (zoom < 0.01) zoom = 0.01 // 限制最小缩放级别
+    if (opt.e.ctrlKey) {
+      console.log('pinch')
+      const delta = opt.e.deltaY
+      let zoom = canvas.getZoom()
+      zoom *= 0.999 ** delta
+      canvas.setZoom(zoom)
+    } else {
+      // const e = opt.e
+      // const vpt = canvas.viewportTransform
+      // vpt[4] += e.deltaX
+      // vpt[5] += e.deltaY
+      // canvas.requestRenderAll()
+      const delta = opt.e.deltaY // 滚轮，向上滚一下是 -100，向下滚一下是 100
+      let zoom = canvas.getZoom() // 获取画布当前缩放值
+      zoom *= 0.996 ** delta
+      if (zoom > 20) zoom = 20 // 限制最大缩放级别
+      if (zoom < 0.01) zoom = 0.01 // 限制最小缩放级别
 
-    // 以鼠标所在位置为原点缩放
-    const point = new Point(opt.e.offsetX, opt.e.offsetY)
-    canvas.zoomToPoint(
-      point,
-      zoom, // 传入修改后的缩放级别
-    )
+      // 以鼠标所在位置为原点缩放
+      const point = new Point(opt.e.offsetX, opt.e.offsetY)
+      canvas.zoomToPoint(
+        point,
+        zoom, // 传入修改后的缩放级别
+      )
+    }
   })
   // canvas拖拽
   let mouseDownButton: number | null = null
