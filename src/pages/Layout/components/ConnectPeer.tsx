@@ -1,6 +1,6 @@
 import { Button, Input, InputRef, Modal } from 'antd'
 import { useCallback, useEffect, useRef, useState } from 'react'
-import { connectToPeer } from '../../../utils/peer'
+import { connectToPeer, getIdFromName } from '../../../utils/peer'
 import { notification } from '../Layout'
 
 const ConnectPeer: React.FC = () => {
@@ -9,7 +9,7 @@ const ConnectPeer: React.FC = () => {
 
   const doConnect = useCallback((name: string) => {
     setOpen(false)
-    connectToPeer(name)
+    connectToPeer(getIdFromName(name))
   }, [])
   const inputRef = useRef<InputRef>(null)
   useEffect(() => {

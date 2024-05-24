@@ -6,7 +6,7 @@ import {
   showAlertAtom,
   streamingDataAtom,
 } from './atom'
-import { sendDataToPeers } from '@/utils/peer'
+import { getNameFromId, sendDataToPeers } from '@/utils/peer'
 import { notification } from '../Layout/Layout'
 
 let video: HTMLVideoElement
@@ -334,7 +334,9 @@ export function stopScreen(data: any) {
   if (peerId !== myPeerId) {
     store.set(remoteStreamDataAtom, (o) => o.filter((v) => v.id !== peerId))
     if (streamingData.id === peerId) {
-      notification.warning({ message: `< ${peerId} >停止共享屏幕` })
+      notification.warning({
+        message: `< ${getNameFromId(peerId)} >停止共享屏幕`,
+      })
       resetVideo()
     }
   }

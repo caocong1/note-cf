@@ -2,6 +2,7 @@ import { myPeerIdAtom, peersAtom, store } from '@/atom'
 import { filesAtom } from './atom'
 import { notification } from 'antd'
 import { DataConnection } from 'peerjs'
+import { getNameFromId } from '@/utils/peer'
 
 export function addFile(file: any) {
   store.set(filesAtom, (old) => [...old, file])
@@ -24,7 +25,7 @@ export async function requestDownload(data: any) {
   }
   if (fileData.type === 'file' && fileData.fileHandle) {
     notification.success({
-      message: `< ${p.peerId} >开始下载文件[ ${fileData.name} ]`,
+      message: `< ${getNameFromId(p.peerId)} >开始下载文件[ ${fileData.name} ]`,
     })
     const file = await fileData.fileHandle.getFile()
     conn.send({
@@ -53,7 +54,7 @@ export async function requestDownload(data: any) {
     }
   } else if (fileData.type === 'file' && fileData.file) {
     notification.success({
-      message: `< ${p.peerId} >开始下载文件[ ${fileData.name} ]`,
+      message: `< ${getNameFromId(p.peerId)} >开始下载文件[ ${fileData.name} ]`,
     })
     const { file } = fileData
     conn.send({
@@ -86,7 +87,7 @@ export async function requestDownload(data: any) {
     fileData.subFiles?.length
   ) {
     notification.success({
-      message: `< ${p.peerId} >开始下载文件夹[ ${fileData.name} ]`,
+      message: `< ${getNameFromId(p.peerId)} >开始下载文件夹[ ${fileData.name} ]`,
     })
     // const files = fileData.subFiles.map((fh: any) => ({
     //   name: fh.name,

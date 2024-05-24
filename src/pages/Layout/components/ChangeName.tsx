@@ -2,7 +2,7 @@ import { Button, Input, InputRef, Modal } from 'antd'
 import { useAtomValue, useSetAtom } from 'jotai'
 import { myPeerIdAtom } from '../../../atom'
 import { useCallback, useEffect, useRef, useState } from 'react'
-import { initPeer } from '../../../utils/peer'
+import { getIdFromName, getNameFromId, initPeer } from '../../../utils/peer'
 import { notification } from '../Layout'
 import { pageLoadingAtom } from '../atom'
 
@@ -19,13 +19,19 @@ const ChangeName: React.FC = () => {
   }
 
   const doChangeName = useCallback((name: string) => {
-    setOpen(false)
-    setPageLoading(true)
-    initPeer(name)
+    const id = getIdFromName(name.trim())
+    if (id) {
+      setOpen(false)
+      setPageLoading(true)
+      initPeer(id)
+    } else {
+      notification.error({ message: '昵称不能为空' })
+    }
   }, [])
   const inputRef = useRef<InputRef>(null)
   useEffect(() => {
     if (open) {
+      setValue(getNameFromId(myPeerId))
       setTimeout(() => {
         inputRef.current?.focus()
       }, 100)
@@ -42,7 +48,7 @@ const ChangeName: React.FC = () => {
           setOpen(true)
         }}
       >
-        {myPeerId}
+        {getNameFromId(myPeerId)}
       </div>
       <Modal
         open={open || mustChangeName}

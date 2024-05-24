@@ -168,7 +168,7 @@ export function initPeer(myPeerId: string) {
           if (p) {
             modal.confirm({
               title: '提示',
-              content: `是否接收来自< ${call.peer} >的屏幕共享`,
+              content: `是否接收来自< ${getNameFromId(call.peer)} >的屏幕共享`,
               onOk() {
                 store.set(componentAtom, 'screen')
                 playVideo(newStreamData)
@@ -397,7 +397,9 @@ function addNewPeer(res: PeerData) {
     if (isExist) {
       return old
     } else {
-      notification.success({ message: `成功连接< ${res.peerId} >` })
+      notification.success({
+        message: `成功连接< ${getNameFromId(res.peerId)} >`,
+      })
       return [...old, new PeerConnection(res)]
     }
   })
@@ -518,7 +520,7 @@ function removePeer(peerId: string) {
   store.set(peersAtom, (old) => {
     const p = old.find((peer: PeerConnection) => peer.peerId === peerId)
     if (p?.status === 'connected') {
-      notification.info({ message: `< ${p.peerId} >离开房间` })
+      notification.info({ message: `< ${getNameFromId(p.peerId)} >离开房间` })
     }
     return old.filter((peer: PeerConnection) => peer.peerId !== peerId)
   })
@@ -531,7 +533,7 @@ window.addEventListener('beforeunload', () => {
 
 function addFileNotice(data: any, peerId: string) {
   notification.success({
-    message: `< ${peerId} >分享了文件${
+    message: `< ${getNameFromId(peerId)} >分享了文件${
       data.type === 'directory' ? '夹' : ''
     }[ ${data.name} ]`,
   })
@@ -541,7 +543,7 @@ function downloadComplete(data: { fileId: string; peerId: string }) {
   const fileData = store.get(filesAtom).find((f) => f.id === data.fileId)
   if (fileData) {
     notification.success({
-      message: `< ${data.peerId} >下载文件${
+      message: `< ${getNameFromId(data.peerId)} >下载文件${
         fileData.type === 'directory' ? '夹' : ''
       }[ ${fileData.name} ]完成`,
     })
@@ -551,4 +553,12 @@ function downloadComplete(data: { fileId: string; peerId: string }) {
 export function connectToPeer(peerId: string) {
   const c = peer.connect(peerId)
   connInit(c)
+}
+
+export function getNameFromId(id: string) {
+  return decodeURI(atob(id))
+}
+
+export function getIdFromName(name: string) {
+  return btoa(encodeURI(name))
 }
