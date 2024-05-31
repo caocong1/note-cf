@@ -2,7 +2,7 @@ import React, { useEffect, useLayoutEffect, useState } from 'react'
 import { useAtom, useAtomValue, useSetAtom } from 'jotai'
 import { myPeerIdAtom, peersAtom, store } from '../../atom'
 import { App, Badge, Dropdown, Radio, Spin, Tag, Tooltip } from 'antd'
-import { initPeer, roomName } from '../../utils/peer'
+import { getNameFromId, initPeer, roomName } from '../../utils/peer'
 import { PresetStatusColorType } from 'antd/es/_util/colors'
 import ChangeName from './components/ChangeName'
 import Note from '../Note'
@@ -115,7 +115,7 @@ const Layout: React.FC = () => {
                         >
                           <Badge status={badgeStatus[p.status]} />
                           <div>
-                            {p.peerId}
+                            {getNameFromId(p.peerId)}
                             {p.status === 'self' && '(me)'}
                           </div>
                         </div>
