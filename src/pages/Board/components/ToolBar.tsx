@@ -2,12 +2,12 @@ import Icon, { ClearOutlined } from '@ant-design/icons'
 import { Button, ColorPicker, Popover, Slider } from 'antd'
 import PenSvg from '@/assets/pen.svg?react'
 import React, { useState } from 'react'
-import { PencilBrush } from 'fabric'
 
-const ToolBar: React.FC<{
-  canvasClear: () => void
-  pencilBrush: PencilBrush
-}> = ({ canvasClear, pencilBrush }) => {
+const ToolBar: React.FC<
+  {
+    canvasClear: () => void
+  } & PenSettingProps
+> = ({ canvasClear, onPencilColorChange, onPencilWidthChange }) => {
   return (
     <div
       style={{
@@ -22,7 +22,12 @@ const ToolBar: React.FC<{
       <Popover
         placement="left"
         title="Pen"
-        content={<PenSetting pencilBrush={pencilBrush} />}
+        content={
+          <PenSetting
+            onPencilColorChange={onPencilColorChange}
+            onPencilWidthChange={onPencilWidthChange}
+          />
+        }
       >
         <Button icon={<Icon component={PenSvg} />} />
       </Popover>
@@ -40,8 +45,14 @@ export default ToolBar
 
 // type Color = GetProp<ColorPickerProps, 'value'>
 
-const PenSetting: React.FC<{ pencilBrush: PencilBrush }> = ({
-  pencilBrush,
+interface PenSettingProps {
+  onPencilColorChange: (c: string) => void
+  onPencilWidthChange: (w: number) => void
+}
+
+const PenSetting: React.FC<PenSettingProps> = ({
+  onPencilColorChange,
+  onPencilWidthChange,
 }) => {
   const [color, setColor] = useState<string>('red')
   const [inputValue, setInputValue] = useState<number>(10)
@@ -60,7 +71,8 @@ const PenSetting: React.FC<{ pencilBrush: PencilBrush }> = ({
       <ColorPicker
         value={color}
         onChange={(res) => {
-          pencilBrush.color = res.toHexString()
+          // pencilBrush.color = res.toHexString()
+          onPencilColorChange(res.toHexString())
           setColor(res.toHexString())
         }}
       />
@@ -68,7 +80,8 @@ const PenSetting: React.FC<{ pencilBrush: PencilBrush }> = ({
         min={1}
         max={50}
         onChange={(v) => {
-          pencilBrush.width = v
+          // pencilBrush.width = v
+          onPencilWidthChange(v)
           setInputValue(v)
         }}
         value={inputValue}

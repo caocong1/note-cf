@@ -31,8 +31,8 @@ export function getBoardObjectsJson() {
 //     boardPaths: objects.map((o: any) => ({ ...o.toJSON(), id: o.id })),
 //   })
 // }
-export function initBoardCanvas(canvasRef: React.RefObject<HTMLCanvasElement>) {
-  canvas = new Canvas(canvasRef.current!, {
+export function initBoardCanvas(canvasEl: HTMLCanvasElement) {
+  canvas = new Canvas(canvasEl, {
     isDrawingMode: true,
     stopContextMenu: true,
     fireMiddleClick: true,

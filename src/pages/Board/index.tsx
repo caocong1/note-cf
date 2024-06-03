@@ -11,10 +11,11 @@ const Board: React.FC = () => {
   const showAlert = useAtomValue(showAlertAtom)
 
   useEffect(() => {
+    if (!canvasRef.current) return
     canvasRef.current!.width = window.innerWidth
     canvasRef.current!.height = window.innerHeight - 50
 
-    initBoardCanvas(canvasRef)
+    initBoardCanvas(canvasRef.current!)
 
     function resizeCanvas() {
       const newWidth = window.innerWidth
@@ -59,7 +60,12 @@ const Board: React.FC = () => {
           canvas.clear()
           sendDataToPeers({ type: 'board-clear', data: {} })
         }}
-        pencilBrush={pencilBrush}
+        onPencilColorChange={(c) => {
+          pencilBrush.color = c
+        }}
+        onPencilWidthChange={(w) => {
+          pencilBrush.width = w
+        }}
       />
       {!localStorage.notShowAlert && showAlert && <BoardHelpAlert />}
     </div>

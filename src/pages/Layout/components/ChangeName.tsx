@@ -12,11 +12,10 @@ const ChangeName: React.FC = () => {
   const [open, setOpen] = useState(false)
   const [value, setValue] = useState('')
   const mustChangeName = myPeerId === ''
-  if (mustChangeName) {
-    document.body.style.pointerEvents = 'none'
-  } else {
-    document.body.style.pointerEvents = 'auto'
-  }
+
+  useEffect(() => {
+    document.body.style.pointerEvents = myPeerId === '' ? 'none' : 'auto'
+  }, [myPeerId])
 
   const doChangeName = useCallback((name: string) => {
     const id = getIdFromName(name.trim())

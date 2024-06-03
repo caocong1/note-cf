@@ -101,7 +101,12 @@ const Screen: React.FC = () => {
             screenCanvas.remove(...screenCanvas.getObjects().slice(1))
             sendDataToPeers({ type: 'screen-board-clear', data: {} })
           }}
-          pencilBrush={screenPencilBrush}
+          onPencilColorChange={(c) => {
+            screenPencilBrush.color = c
+          }}
+          onPencilWidthChange={(w) => {
+            screenPencilBrush.width = w
+          }}
         />
       )}
       <div
