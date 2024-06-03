@@ -33,41 +33,56 @@ export const roomName = decodeURI(location.pathname)
 export let peer: Peer
 const iceUsername = import.meta.env.VITE_ICEUSERNAME
 const iceCredential = import.meta.env.VITE_ICECREDENTIAL
+const host = import.meta.env.VITE_PEER_HOST
+const port = import.meta.env.VITE_PEER_PORT
+const key = import.meta.env.VITE_PEER_KEY
+const secure = import.meta.env.VITE_PEER_SECURE === 'true'
+const iceServers = iceUsername
+  ? [
+      {
+        urls: 'stun:stun.relay.metered.ca:80',
+      },
+      {
+        urls: 'turn:global.relay.metered.ca:80',
+        username: iceUsername,
+        credential: iceCredential,
+      },
+      {
+        urls: 'turn:global.relay.metered.ca:80?transport=tcp',
+        username: iceUsername,
+        credential: iceCredential,
+      },
+      {
+        urls: 'turn:global.relay.metered.ca:443',
+        username: iceUsername,
+        credential: iceCredential,
+      },
+      {
+        urls: 'turns:global.relay.metered.ca:443?transport=tcp',
+        username: iceUsername,
+        credential: iceCredential,
+      },
+    ]
+  : []
+
 export function initPeer(myPeerId: string) {
   // const myPeerId = store.get(myPeerIdAtom)
   if (peer) {
     peer.destroy()
   }
-  peer = new Peer(myPeerId, {
-    debug: 0,
-    config: {
-      iceServers: [
-        {
-          urls: 'stun:stun.relay.metered.ca:80',
-        },
-        {
-          urls: 'turn:global.relay.metered.ca:80',
-          username: iceUsername,
-          credential: iceCredential,
-        },
-        {
-          urls: 'turn:global.relay.metered.ca:80?transport=tcp',
-          username: iceUsername,
-          credential: iceCredential,
-        },
-        {
-          urls: 'turn:global.relay.metered.ca:443',
-          username: iceUsername,
-          credential: iceCredential,
-        },
-        {
-          urls: 'turns:global.relay.metered.ca:443?transport=tcp',
-          username: iceUsername,
-          credential: iceCredential,
-        },
-      ],
-    },
-  })
+  peer = new Peer(
+    myPeerId,
+    host
+      ? {
+          key,
+          host,
+          port,
+          secure,
+          // debug: 0,
+          config: { iceServers },
+        }
+      : { config: { iceServers } },
+  )
   // peer = new Peer(myPeerId, {
   //   host: import.meta.env.VITE_HOST || location.hostname,
   //   port: import.meta.env.VITE_PORT || location.port,
@@ -97,9 +112,21 @@ export function initPeer(myPeerId: string) {
       const conn = peer.connect(invitePeerId)
       connInit(conn)
     } else {
-      const pIds = sessionStorage.getItem('peerIds')?.split(',')
-      if (pIds?.length) {
-        connectIds(pIds)
+      if (host) {
+        fetch(`${secure ? 'https://' : 'http://'}${host}:${port}/${key}/peers`)
+          .then((res) => res.json())
+          .then((data) => {
+            console.log('peers', data)
+            const pIds = data?.filter((p: string) => p !== id)
+            if (pIds?.length) {
+              connectIds(pIds)
+            }
+          })
+      } else {
+        const pIds = sessionStorage.getItem('peerIds')?.split(',')
+        if (pIds?.length) {
+          connectIds(pIds)
+        }
       }
     }
     // const name = store.get(myNameAtom)
