@@ -1,11 +1,9 @@
 import { PeerServer } from 'peer'
 
 const port = process.env.VITE_PEER_SERVER_PORT || process.env.VITE_PEER_PORT || 9000
-const key = process.env.VITE_PEER_KEY || 'note'
 
 const peerServer = PeerServer({
   port,
-  key,
   allow_discovery: true,
 })
 

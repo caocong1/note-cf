@@ -35,8 +35,7 @@ const iceUsername = import.meta.env.VITE_ICEUSERNAME
 const iceCredential = import.meta.env.VITE_ICECREDENTIAL
 const host = import.meta.env.VITE_PEER_HOST
 const port = import.meta.env.VITE_PEER_PORT
-const key = import.meta.env.VITE_PEER_KEY
-const secure = import.meta.env.VITE_PEER_SECURE === 'true'
+const secure = import.meta.env.VITE_PEER_SECURE
 const iceServers = iceUsername
   ? [
       {
@@ -74,10 +73,14 @@ export function initPeer(myPeerId: string) {
     myPeerId,
     host
       ? {
-          key,
-          host,
-          port,
-          secure,
+          // host,
+          // port,
+          // secure,
+        host: host|| location.hostname,
+        port: port || location.port,
+        secure: secure
+          ? secure === 'true'
+          : location.protocol === 'https:',
           // debug: 0,
           config: { iceServers },
         }
@@ -111,24 +114,31 @@ export function initPeer(myPeerId: string) {
       history.replaceState(null, '', location.origin + location.pathname)
       const conn = peer.connect(invitePeerId)
       connInit(conn)
-    } else {
-      if (host) {
-        fetch(`${secure ? 'https://' : 'http://'}${host}:${port}/${key}/peers`)
-          .then((res) => res.json())
-          .then((data) => {
-            console.log('peers', data)
-            const pIds = data?.filter((p: string) => p !== id)
-            if (pIds?.length) {
-              connectIds(pIds)
-            }
-          })
-      } else {
-        const pIds = sessionStorage.getItem('peerIds')?.split(',')
-        if (pIds?.length) {
-          connectIds(pIds)
-        }
-      }
     }
+    peer.listAllPeers((data) =>{
+      console.log(data)
+      const pIds = data?.filter((p: string) => p !== id)
+      if (pIds?.length) {
+        connectIds(pIds)
+      }
+    })
+      // if (host) {
+      //   fetch(`${secure ? 'https://' : 'http://'}${host}:${port}/peerjs/peers`)
+      //     .then((res) => res.json())
+      //     .then((data) => {
+      //       console.log('peers', data)
+      //       const pIds = data?.filter((p: string) => p !== id)
+      //       if (pIds?.length) {
+      //         connectIds(pIds)
+      //       }
+      //     })
+      // } else {
+      //   const pIds = sessionStorage.getItem('peerIds')?.split(',')
+      //   if (pIds?.length) {
+      //     connectIds(pIds)
+      //   }
+      // }
+
     // const name = store.get(myNameAtom)
     // request('add-peer', { pathname: roomName, peerId: id, name }).then(
     //   (res) => {

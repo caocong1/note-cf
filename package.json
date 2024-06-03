@@ -15,7 +15,7 @@
   },
   "dependencies": {
     "@ant-design/icons": "^5.3.7",
-    "antd": "^5.17.3",
+    "antd": "^5.18.0",
     "cors": "^2.8.5",
     "express": "^4.19.2",
     "fabric": "6.0.0-beta20",
