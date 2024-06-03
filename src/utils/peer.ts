@@ -33,6 +33,8 @@ export const roomName = decodeURI(location.pathname)
 export let peer: Peer
 const iceUsername = import.meta.env.VITE_ICEUSERNAME
 const iceCredential = import.meta.env.VITE_ICECREDENTIAL
+const selfHost = import.meta.env.VITE_PEER_SELF_HOST
+console.log('selfHost', selfHost, typeof selfHost)
 const host = import.meta.env.VITE_PEER_HOST
 const port = import.meta.env.VITE_PEER_PORT
 const secure = import.meta.env.VITE_PEER_SECURE
@@ -71,16 +73,14 @@ export function initPeer(myPeerId: string) {
   }
   peer = new Peer(
     myPeerId,
-    host
+    selfHost
       ? {
           // host,
           // port,
           // secure,
-        host: host|| location.hostname,
-        port: port || location.port,
-        secure: secure
-          ? secure === 'true'
-          : location.protocol === 'https:',
+          host: host || location.hostname,
+          port: port || location.port,
+          secure: secure ? secure === 'true' : location.protocol === 'https:',
           // debug: 0,
           config: { iceServers },
         }
@@ -115,29 +115,29 @@ export function initPeer(myPeerId: string) {
       const conn = peer.connect(invitePeerId)
       connInit(conn)
     }
-    peer.listAllPeers((data) =>{
+    peer.listAllPeers((data) => {
       console.log(data)
       const pIds = data?.filter((p: string) => p !== id)
       if (pIds?.length) {
         connectIds(pIds)
       }
     })
-      // if (host) {
-      //   fetch(`${secure ? 'https://' : 'http://'}${host}:${port}/peerjs/peers`)
-      //     .then((res) => res.json())
-      //     .then((data) => {
-      //       console.log('peers', data)
-      //       const pIds = data?.filter((p: string) => p !== id)
-      //       if (pIds?.length) {
-      //         connectIds(pIds)
-      //       }
-      //     })
-      // } else {
-      //   const pIds = sessionStorage.getItem('peerIds')?.split(',')
-      //   if (pIds?.length) {
-      //     connectIds(pIds)
-      //   }
-      // }
+    // if (host) {
+    //   fetch(`${secure ? 'https://' : 'http://'}${host}:${port}/peerjs/peers`)
+    //     .then((res) => res.json())
+    //     .then((data) => {
+    //       console.log('peers', data)
+    //       const pIds = data?.filter((p: string) => p !== id)
+    //       if (pIds?.length) {
+    //         connectIds(pIds)
+    //       }
+    //     })
+    // } else {
+    //   const pIds = sessionStorage.getItem('peerIds')?.split(',')
+    //   if (pIds?.length) {
+    //     connectIds(pIds)
+    //   }
+    // }
 
     // const name = store.get(myNameAtom)
     // request('add-peer', { pathname: roomName, peerId: id, name }).then(
